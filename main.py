@@ -92,11 +92,15 @@ if audio_dict and "bytes" in audio_dict:
         recognizer = sr.Recognizer()
         audio_bytes = audio_dict["bytes"]  # Extract actual audio bytes
         with io.BytesIO(audio_bytes) as audio_buffer:
-            with sr.AudioFile(audio_buffer) as source:
-                audio = recognizer.record(source)
-                recognized_text = recognizer.recognize_google(audio)
-                st.write("**Recognized Text:**", recognized_text)
-                query = recognized_text  # Set recognized text as query
+            with wave.open(audio_buffer, "rb") as wav_file:
+                if wav_file.getnchannels() != 1:
+                    st.warning("Only mono audio is supported. Please record again.")
+                else:
+                    with sr.AudioFile(audio_buffer) as source:
+                        audio = recognizer.record(source)
+                        recognized_text = recognizer.recognize_google(audio)
+                        st.write("**Recognized Text:**", recognized_text)
+                        query = recognized_text  # Set recognized text as query
     except sr.UnknownValueError:
         st.warning("Could not understand the audio. Please try again in a quiet environment.")
     except sr.RequestError:
