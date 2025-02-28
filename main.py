@@ -93,20 +93,22 @@ if audio_dict and "bytes" in audio_dict:
         audio_bytes = audio_dict["bytes"]  # Extract actual audio bytes
         
         # Ensure proper WAV format
-        with io.BytesIO(audio_bytes) as audio_buffer:
-            try:
-                with wave.open(audio_buffer, "rb") as wav_file:
-                    if wav_file.getnchannels() != 1:
-                        st.warning("Only mono audio is supported. Please record again.")
-                    else:
-                        audio_buffer.seek(0)  # Reset buffer position
-                        with sr.AudioFile(audio_buffer) as source:
-                            audio = recognizer.record(source)
-                            recognized_text = recognizer.recognize_google(audio)
-                            st.text_area("Recognized Text:", recognized_text)  # Display text instead of audio
-                            query = recognized_text  # Set recognized text as query
-            except wave.Error:
-                st.warning("Invalid WAV file format. Please record again.")
+        audio_buffer = io.BytesIO(audio_bytes)
+        audio_buffer.seek(0)  # Reset buffer position
+        
+        try:
+            with wave.open(audio_buffer, "rb") as wav_file:
+                if wav_file.getnchannels() != 1:
+                    st.warning("Only mono audio is supported. Please record again.")
+                else:
+                    audio_buffer.seek(0)
+                    with sr.AudioFile(audio_buffer) as source:
+                        audio = recognizer.record(source)
+                        recognized_text = recognizer.recognize_google(audio)
+                        st.text_area("Recognized Text:", recognized_text)  # Display text instead of audio
+                        query = recognized_text  # Set recognized text as query
+        except wave.Error:
+            st.warning("Invalid WAV file format. Please record again.")
     except sr.UnknownValueError:
         st.warning("Could not understand the audio. Please try again in a quiet environment.")
     except sr.RequestError:
