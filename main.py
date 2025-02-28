@@ -114,8 +114,8 @@ if audio_dict and "bytes" in audio_dict:
             st.text_area("Recognized Text:", recognized_text)  # Display the recognized text
             query = recognized_text  # Set recognized text as query
 
-    except sr.UnknownValueError:
-        st.warning("Could not understand the audio. Please try again in a quiet environment and speak clearly.")
+    except sr.UnknownValueError as e:
+        st.warning(f"Could not understand the audio. Please try again in a quiet environment and speak clearly.{e}")
     except sr.RequestError:
         st.warning("Error connecting to the speech recognition service. Please check your internet connection.")
     except Exception as e:
