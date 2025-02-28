@@ -11,6 +11,7 @@ from fpdf import FPDF
 import speech_recognition as sr
 from streamlit_mic_recorder import mic_recorder  # For frontend audio recording
 import wave
+import numpy as np
 
 # Load environment variables
 load_dotenv()
@@ -68,19 +69,6 @@ def generate_pdf(content):
     pdf_buffer.seek(0)
     return pdf_buffer
 
-def recognize_speech():
-    recognizer = sr.Recognizer()
-    with sr.Microphone() as source:
-        st.info("Listening... Speak now!")
-        try:
-            audio = recognizer.listen(source, timeout=5)
-            text = recognizer.recognize_google(audio)
-            return text
-        except sr.UnknownValueError:
-            return "Sorry, I couldn't understand the speech."
-        except sr.RequestError:
-            return "Error connecting to speech recognition service."
-
 def get_all_query(query):
     model = genai.GenerativeModel('gemini-1.5-flash')
     response = model.generate_content([query])
@@ -114,16 +102,18 @@ if audio_data and isinstance(audio_data, dict) and "bytes" in audio_data:
     
     # Process audio file using speech recognition
     recognizer = sr.Recognizer()
-    with sr.AudioFile(wav_buffer) as source:
-        audio = recognizer.record(source)
-        try:
+    try:
+        with sr.AudioFile(wav_buffer) as source:
+            audio = recognizer.record(source)
             recognized_text = recognizer.recognize_google(audio)
             st.text_area("Recognized Text:", recognized_text)
             query = recognized_text  # Set recognized text as query
-        except sr.UnknownValueError:
-            st.warning("Could not understand the audio.")
-        except sr.RequestError:
-            st.warning("Error connecting to speech recognition service.")
+    except sr.UnknownValueError:
+        st.warning("Could not understand the audio. Please try again in a quiet environment.")
+    except sr.RequestError:
+        st.warning("Error connecting to speech recognition service.")
+    except Exception as e:
+        st.warning(f"An error occurred: {e}")
 
 # Button to submit the query
 if st.button("Ask") or query:
