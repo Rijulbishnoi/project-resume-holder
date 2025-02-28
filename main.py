@@ -10,6 +10,7 @@ import google.generativeai as genai
 from fpdf import FPDF  
 import speech_recognition as sr
 from streamlit_mic_recorder import mic_recorder  # For frontend audio recording
+import wave
 
 # Load environment variables
 load_dotenv()
@@ -102,10 +103,18 @@ if audio_data and isinstance(audio_data, dict) and "bytes" in audio_data:
     st.success("Audio Recorded Successfully!")
     st.audio(audio_bytes, format='audio/wav')  # Play recorded audio
     
+    # Save audio to WAV file for compatibility
+    wav_buffer = io.BytesIO()
+    with wave.open(wav_buffer, 'wb') as wf:
+        wf.setnchannels(1)
+        wf.setsampwidth(2)
+        wf.setframerate(44100)
+        wf.writeframes(audio_bytes)
+    wav_buffer.seek(0)
+    
     # Process audio file using speech recognition
     recognizer = sr.Recognizer()
-    audio_buffer = io.BytesIO(audio_bytes)
-    with sr.AudioFile(audio_buffer) as source:
+    with sr.AudioFile(wav_buffer) as source:
         audio = recognizer.record(source)
         try:
             recognized_text = recognizer.recognize_google(audio)
