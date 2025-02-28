@@ -63,7 +63,7 @@ def generate_pdf(content):
         pdf.multi_cell(0, 10, line)
 
     pdf_buffer = io.BytesIO()
-    pdf_buffer.write(pdf.output(dest='S').encode('latin1'))
+    pdf.output(pdf_buffer, dest='S')
     pdf_buffer.seek(0)
     return pdf_buffer
 
@@ -103,7 +103,8 @@ if audio_data:
     
     # Process audio file using speech recognition
     recognizer = sr.Recognizer()
-    with sr.AudioFile(io.BytesIO(audio_data)) as source:
+    audio_buffer = io.BytesIO(audio_data)
+    with sr.AudioFile(audio_buffer) as source:
         audio = recognizer.record(source)
         try:
             recognized_text = recognizer.recognize_google(audio)
