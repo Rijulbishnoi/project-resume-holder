@@ -2,3 +2,8 @@ streamlit
 google-generativeai 
 python-dotenv 
 pdf2image 
+livekit
+aiortc
+fpdf
+speechrecognition
+pyaudio
