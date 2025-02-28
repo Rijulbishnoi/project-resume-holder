@@ -85,12 +85,13 @@ query = st.text_input("HelpDesk", key="text_query")
 
 # Frontend Audio Recorder
 st.subheader("Voice Input")
-audio_data = mic_recorder(start_prompt="Click to Speak", stop_prompt="Stop Recording", key="mic")
-if audio_data:
+audio_dict = mic_recorder(start_prompt="Click to Speak", stop_prompt="Stop Recording", key="mic")
+if audio_dict and "bytes" in audio_dict:
     st.success("Audio Recorded Successfully!")
     try:
         recognizer = sr.Recognizer()
-        with io.BytesIO(audio_data) as audio_buffer:
+        audio_bytes = audio_dict["bytes"]  # Extract actual audio bytes
+        with io.BytesIO(audio_bytes) as audio_buffer:
             with sr.AudioFile(audio_buffer) as source:
                 audio = recognizer.record(source)
                 recognized_text = recognizer.recognize_google(audio)
