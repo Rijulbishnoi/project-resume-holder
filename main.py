@@ -89,7 +89,6 @@ audio_data = mic_recorder(start_prompt="Click to Speak", stop_prompt="Stop Recor
 if audio_data and isinstance(audio_data, dict) and "bytes" in audio_data:
     audio_bytes = audio_data["bytes"]  # Extract binary data
     st.success("Audio Recorded Successfully!")
-    st.audio(audio_bytes, format='audio/wav')  # Play recorded audio
     
     # Save audio to WAV file for compatibility
     wav_buffer = io.BytesIO()
@@ -106,7 +105,7 @@ if audio_data and isinstance(audio_data, dict) and "bytes" in audio_data:
         with sr.AudioFile(wav_buffer) as source:
             audio = recognizer.record(source)
             recognized_text = recognizer.recognize_google(audio)
-            st.text_area("Recognized Text:", recognized_text)
+            st.write("**Recognized Text:**", recognized_text)
             query = recognized_text  # Set recognized text as query
     except sr.UnknownValueError:
         st.warning("Could not understand the audio. Please try again in a quiet environment.")
