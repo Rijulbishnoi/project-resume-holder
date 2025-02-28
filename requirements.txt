@@ -8,4 +8,4 @@ fpdf
 speechrecognition
 pyaudio
 pydub
-streamlit_audio_recorder
+streamlit-mic-recorder
