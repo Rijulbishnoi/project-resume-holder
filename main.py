@@ -86,27 +86,16 @@ query = st.text_input("HelpDesk", key="text_query")
 # Frontend Audio Recorder
 st.subheader("Voice Input")
 audio_data = mic_recorder(start_prompt="Click to Speak", stop_prompt="Stop Recording", key="mic")
-if audio_data and isinstance(audio_data, dict) and "bytes" in audio_data:
-    audio_bytes = audio_data["bytes"]  # Extract binary data
+if audio_data:
     st.success("Audio Recorded Successfully!")
-    
-    # Save audio to WAV file for compatibility
-    wav_buffer = io.BytesIO()
-    with wave.open(wav_buffer, 'wb') as wf:
-        wf.setnchannels(1)
-        wf.setsampwidth(2)
-        wf.setframerate(44100)
-        wf.writeframes(audio_bytes)
-    wav_buffer.seek(0)
-    
-    # Process audio file using speech recognition
-    recognizer = sr.Recognizer()
     try:
-        with sr.AudioFile(wav_buffer) as source:
-            audio = recognizer.record(source)
-            recognized_text = recognizer.recognize_google(audio)
-            st.write("**Recognized Text:**", recognized_text)
-            query = recognized_text  # Set recognized text as query
+        recognizer = sr.Recognizer()
+        with io.BytesIO(audio_data) as audio_buffer:
+            with sr.AudioFile(audio_buffer) as source:
+                audio = recognizer.record(source)
+                recognized_text = recognizer.recognize_google(audio)
+                st.write("**Recognized Text:**", recognized_text)
+                query = recognized_text  # Set recognized text as query
     except sr.UnknownValueError:
         st.warning("Could not understand the audio. Please try again in a quiet environment.")
     except sr.RequestError:
