@@ -9,7 +9,7 @@ import pdf2image
 import google.generativeai as genai
 from fpdf import FPDF  
 import speech_recognition as sr
-from streamlit_mic_recorder import st_audio_recorder  # For frontend audio recording
+from streamlit_mic_recorder import stmr  # For frontend audio recording
 
 # Load environment variables
 load_dotenv()
@@ -96,7 +96,7 @@ query = st.text_input("HelpDesk", key="text_query")
 
 # Frontend Audio Recorder
 st.subheader("Voice Input")
-audio_data = st_audio_recorder()
+audio_data = stmr.mic_recorder(start_prompt="Click to Speak", stop_prompt="Stop Recording", key="mic")
 if audio_data:
     st.success("Audio Recorded Successfully!")
     st.audio(audio_data, format='audio/wav')  # Play recorded audio
