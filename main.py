@@ -9,8 +9,7 @@ import pdf2image
 import google.generativeai as genai
 from fpdf import FPDF  
 import speech_recognition as sr
-from streamlit_mic_recorder import mic_recorder
-  # For frontend audio recording
+from streamlit_mic_recorder import mic_recorder  # For frontend audio recording
 
 # Load environment variables
 load_dotenv()
@@ -98,13 +97,14 @@ query = st.text_input("HelpDesk", key="text_query")
 # Frontend Audio Recorder
 st.subheader("Voice Input")
 audio_data = mic_recorder(start_prompt="Click to Speak", stop_prompt="Stop Recording", key="mic")
-if audio_data:
+if audio_data and isinstance(audio_data, dict) and "bytes" in audio_data:
+    audio_bytes = audio_data["bytes"]  # Extract binary data
     st.success("Audio Recorded Successfully!")
-    st.audio(audio_data, format='audio/wav')  # Play recorded audio
+    st.audio(audio_bytes, format='audio/wav')  # Play recorded audio
     
     # Process audio file using speech recognition
     recognizer = sr.Recognizer()
-    audio_buffer = io.BytesIO(audio_data)
+    audio_buffer = io.BytesIO(audio_bytes)
     with sr.AudioFile(audio_buffer) as source:
         audio = recognizer.record(source)
         try:
