@@ -9,7 +9,7 @@ import pdf2image
 import google.generativeai as genai
 from fpdf import FPDF  
 import speech_recognition as sr
-from streamlit_mic_recorder import stmr  # For frontend audio recording
+from streamlit_mic_recorder as stmr  # For frontend audio recording
 
 # Load environment variables
 load_dotenv()
