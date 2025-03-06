@@ -23,6 +23,10 @@ if not API_KEY:
     st.error("GOOGLE_API_KEY not found. Please set it in your environment variables.")
     st.stop()
 
+
+query=""
+
+
 genai.configure(api_key=API_KEY)
 
 # Initialize session ID for unique responses
@@ -340,6 +344,7 @@ if audio_dict and "bytes" in audio_dict:
 
 # Text Input
 query = st.text_input("HelpDesk", key="text_query")
+
 
 # Voice Input Button
 if st.button("🎤 Speak"):
