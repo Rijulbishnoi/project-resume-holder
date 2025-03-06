@@ -337,19 +337,18 @@ if audio_dict and "bytes" in audio_dict:
         st.warning("Error connecting to the speech recognition service. Please check your internet connection.")
     except Exception as e:
         st.warning(f"An error occurred: {e}")
-# Button to submit the query
-if st.button("Ask") or query:
-    if query:
-        response = get_all_query(query)
-        st.subheader("Response:")
-        st.write(response)
-    else:
-        st.warning("Please enter or speak a query!")
+
 # Text Input
 query = st.text_input("HelpDesk", key="text_query")
 
 # Voice Input Button
-
+if st.button("🎤 Speak"):
+    query = recognize_speech()
+    st.text_area("Recognized Text:", query)  # Show converted speech
+    if query:
+        response = get_all_query(query)
+        st.subheader("Response:")
+        st.write(response)
 if st.button("Ask"):
     if query:
         response = get_all_query(query)
