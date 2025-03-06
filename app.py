@@ -372,6 +372,8 @@ if st.button("Ask"):
 '''
 import speech_recognition as sr
 import streamlit as st
+st.set_page_config(page_title="Your Career helper")
+st.header("MY A5 PERSONAL ATS")
 
 def get_all_query(query):
     """Generate a response for interview questions using Google Gemini API with session ID."""
