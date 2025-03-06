@@ -356,7 +356,7 @@ if audio_dict and "bytes" in audio_dict:
 
 # Voice Input Button
 if st.button("🎤 Speak"):
-    query = recognize_speech(audio)
+    query = recognize_speech()
     st.text_area("Recognized Text:", query)  # Show converted speech
     if query:
         response = get_all_query(query)
