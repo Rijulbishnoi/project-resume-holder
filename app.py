@@ -24,7 +24,7 @@ if not API_KEY:
     st.stop()
 
 
-query=""
+
 
 
 genai.configure(api_key=API_KEY)
@@ -310,6 +310,11 @@ elif submit_docker:
                        mime="application/pdf")
 audio_dict = mic_recorder(start_prompt="Click to Speak", stop_prompt="Stop Recording", key="mic")
 
+
+query=""
+query = st.text_input("HelpDesk", key="text_query")
+
+
 if audio_dict and "bytes" in audio_dict:
     st.success("Audio Recorded Successfully!")
     try:
@@ -343,7 +348,6 @@ if audio_dict and "bytes" in audio_dict:
         st.warning(f"An error occurred: {e}")
 
 # Text Input
-query = st.text_input("HelpDesk", key="text_query")
 
 
 # Voice Input Button
