@@ -32,7 +32,7 @@ genai.configure(api_key=API_KEY)
 # Initialize session ID for unique responses
 if "session_id" not in st.session_state:
     st.session_state.session_id = str(uuid.uuid4())  # Generate unique session ID
-'''
+
 def get_gemini_response(input_text, pdf_content, prompt, session_id):
     """Generate a response using Google Gemini API with session ID for uniqueness."""
     model = genai.GenerativeModel('gemini-1.5-flash')
@@ -369,47 +369,3 @@ if st.button("Ask"):
         st.write(response)
     else:
         st.warning("Please enter or speak a query!")
-'''
-import speech_recognition as sr
-import streamlit as st
-st.set_page_config(page_title="Your Career helper")
-st.header("MY A5 PERSONAL ATS")
-
-def get_all_query(query):
-    """Generate a response for interview questions using Google Gemini API with session ID."""
-    model = genai.GenerativeModel('gemini-1.5-flash')
-    response = model.generate_content([query])
-    return response.text
-
-def recognize_speech():
-    recognizer = sr.Recognizer()
-
-    # Check if a microphone is available
-    if not sr.Microphone.list_microphone_names():
-        return "No microphone detected. Please type your query instead."
-
-    try:
-        with sr.Microphone() as source:
-            st.info("Listening... Speak now!")
-            audio = recognizer.listen(source, timeout=5)
-            return recognizer.recognize_google(audio)
-    except sr.UnknownValueError:
-        return "Sorry, I couldn't understand the speech."
-    except sr.RequestError:
-        return "Speech recognition service is unavailable."
-
-# Streamlit UI
-st.title("HelpDesk Chatbot")
-
-query = st.text_input("Enter your query:")
-
-if st.button("🎤 Speak"):
-    query = recognize_speech()  # Get speech input
-    st.text_area("Recognized Text:", query)
-
-if query:
-    response = get_all_query(query)  # Process query
-    st.subheader("Response:")
-    st.write(response)
-else:
-    st.warning("Please enter or speak a query!")
