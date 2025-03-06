@@ -319,6 +319,10 @@ if audio_dict and "bytes" in audio_dict:
     st.success("Audio Recorded Successfully!")
     try:
         recognizer = sr.Recognizer()
+        with sr.Microphone(device_index=0) as source:  # Set to the correct device index
+            print("Listening...")
+            audio = recognizer.listen(source)
+
         audio_bytes = audio_dict["bytes"]  # Extract actual audio bytes
         
         # Convert to proper WAV format
@@ -352,7 +356,7 @@ if audio_dict and "bytes" in audio_dict:
 
 # Voice Input Button
 if st.button("🎤 Speak"):
-    query = recognize_speech()
+    query = recognize_speech(recognized_text)
     st.text_area("Recognized Text:", query)  # Show converted speech
     if query:
         response = get_all_query(query)
