@@ -349,14 +349,7 @@ if st.button("Ask") or query:
 query = st.text_input("HelpDesk", key="text_query")
 
 # Voice Input Button
-if st.button("🎤 Speak"):
-    query = recognize_speech()
-    st.text_area("Recognized Text:", query)  # Show converted speech
-    if query:
-        response = get_all_query(query)
-        st.subheader("Response:")
-        st.write(response)
-# Process Input and Get Response
+
 if st.button("Ask"):
     if query:
         response = get_all_query(query)
