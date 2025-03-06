@@ -347,7 +347,7 @@ if st.button("Ask") or query:
         st.warning("Please enter or speak a query!")
 # Text Input
 query = st.text_input("HelpDesk", key="text_query")
-'''
+
 # Voice Input Button
 if st.button("🎤 Speak"):
     query = recognize_speech()
@@ -364,4 +364,3 @@ if st.button("Ask"):
         st.write(response)
     else:
         st.warning("Please enter or speak a query!")
-'''
