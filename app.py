@@ -25,7 +25,7 @@ if not API_KEY:
 
 
 
-
+print(sr.Microphone.list_microphone_names())
 
 genai.configure(api_key=API_KEY)
 
