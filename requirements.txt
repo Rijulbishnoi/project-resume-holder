@@ -9,3 +9,5 @@ speechrecognition
 pyaudio
 pydub
 streamlit-mic-recorder
+reportlab
+PyPDF2
