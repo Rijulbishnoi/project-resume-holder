@@ -153,8 +153,12 @@ if audio_dict and "bytes" in audio_dict:
         st.warning("Error connecting to the speech recognition service. Please check your internet connection.")
     except Exception as e:
         st.warning(f"An error occurred: {e}")
-
-
+def get_company_requirements(company):
+    requirements ={"TCS": ["Python", "Power BI", "Machine Learning", "SQL"],
+        "Infosys": ["Data Analysis", "Statistics", "AI Solutions"],
+        "Wipro": ["Cloud Computing", "Data Engineering", "Business Intelligence"],
+        "HCL": ["Big Data", "ETL Pipelines", "Deep Learning"]}
+    return requirements.get(company, ["No data available."])
 input_prompts = {
     "Tell_me_about_resume":"""
     You are an expert resume writer with deep knowledge of Data Science, Full Stack, Web Development, 
@@ -284,3 +288,12 @@ if st.button("Ask") or query:
         st.write(response)
     else:
         st.warning("Please enter or speak a query!")
+st.subheader("📊 Top Data Science Hiring Requirements")
+selected_company = st.selectbox("Select a Company", ["Google", "Amazon", "Microsoft", "Meta", "Netflix", "Tesla", "TCS", "Infosys", "Wipro", "HCL", "Startups"])
+
+if selected_company:
+    st.subheader(f"Requirements at {selected_company}")
+    for requirement in get_company_requirements(selected_company):
+        st.write(f"✅ {requirement}")
+
+st.success("Stay ahead by mastering these skills!")
