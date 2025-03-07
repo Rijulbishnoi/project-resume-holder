@@ -371,8 +371,8 @@ import os
 import ffmpeg
 
 # Ensure ffmpeg is installed
-FFMPEG_PATH = "C:\Users\Abc\Downloads\ffmpeg-7.1-full_build\ffmpeg-7.1-full_build\bin\ffmpeg.exe"
-FFPROBE_PATH = "C:\Users\Abc\Downloads\ffmpeg-7.1-full_build\ffmpeg-7.1-full_build\bin\ffprobe.exe"
+FFMPEG_PATH = "C:\\Users\\Abc\\Downloads\\ffmpeg-7.1-full_build\\ffmpeg-7.1-full_build\\bin\\ffmpeg.exe"
+FFPROBE_PATH = "C:\\Users\\Abc\\Downloads\\ffmpeg-7.1-full_build\\ffmpeg-7.1-full_build\\bin\\ffprobe.exe"
 
 st.subheader("🎤 Pitch & Confidence Analyzer from Video")
 
