@@ -19,7 +19,7 @@ praat-parselmouth
 decorator 
 imageio
 imageio_ffmpeg
-numpy
+numpy==1.26.4
 pillow
 proglog
 python-dotenv
