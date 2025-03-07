@@ -1,7 +1,7 @@
 import streamlit as st
 import tempfile
 import os
-from moviepy import editor  # Absolute import
+from moviepy.editor import editor  # Absolute import
 import librosa
 import numpy as np
 

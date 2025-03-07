@@ -16,3 +16,10 @@ moviepy
 ffmpeg-python
 librosa
 praat-parselmouth
+decorator 
+imageio
+imageio_ffmpeg
+numpy
+pillow
+proglog
+python-dotenv
