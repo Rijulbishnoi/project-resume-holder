@@ -10,6 +10,8 @@ from PyPDF2 import PdfReader
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+import requests
+
 
 # Load environment variables
 load_dotenv()
@@ -21,6 +23,9 @@ if not API_KEY:
     st.stop()
 
 genai.configure(api_key=API_KEY)
+
+API_KEY2 = os.getenv("JSEARCH_API_KEY")
+
 
 def get_gemini_response(prompt):
     """Generate a response using Google Gemini API."""
@@ -369,3 +374,43 @@ if st.button(f"📝 Generate 30 {question_category} Interview Questions"):
         response = get_gemini_response(f"Generate 30 {question_category} interview questions and detailed answers")
         st.write(response)
         st.write(response)
+st.subheader("Click on a company to view job description:")
+
+# List of companies
+companies = ["TCS", "Wipro", "Infosys", "Accenture", "Cognizant"]
+
+# Function to fetch jobs using JSearch API
+def fetch_jobs(company):
+    url = "https://jsearch.p.rapidapi.com/search"
+    querystring = {"query": f"{company} Data Scientist", "num_pages": "1"}
+    headers = {
+        "X-RapidAPI-Key": API_KEY2,
+        "X-RapidAPI-Host": "jsearch.p.rapidapi.com"
+    }
+    response = requests.get(url, headers=headers, params=querystring)
+    if response.status_code == 200:
+        jobs = response.json().get("data", [])
+        return jobs
+    else:
+        return []
+
+# Create buttons for each company
+selected_company = None
+for company in companies:
+    if st.button(company):
+        selected_company = company
+
+# Display job description if a company is selected
+if selected_company:
+    st.subheader(f"Job Listings at {selected_company}")
+    jobs = fetch_jobs(selected_company)
+    if jobs:
+        for job in jobs:
+            st.markdown(f"### {job.get('job_title', 'Job Title Not Available')}")
+            st.write(f"*Company:* {job.get('employer_name', 'N/A')}")
+            st.write(f"*Location:* {job.get('job_city', 'Unknown')}, {job.get('job_country', 'Unknown')}")
+            st.write(f"*Description:* {job.get('job_description', 'No description available.')}")
+            st.markdown(f"[Apply Here]({job.get('job_apply_link', '#')})")
+            st.write("---")
+    else:
+        st.write("No job listings found. Try again later!")

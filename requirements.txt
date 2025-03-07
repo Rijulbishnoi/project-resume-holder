@@ -11,3 +11,7 @@ pydub
 streamlit-mic-recorder
 reportlab
 PyPDF2
+google-generativeai 
+moviepy 
+ffmpeg-python
+librosa

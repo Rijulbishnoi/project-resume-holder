@@ -213,6 +213,7 @@ input_prompts = {
     """
 }
 
+
 if submit_tell_me_about and uploaded_file:
     response=get_gemini_response(input_text,pdf_content,input_prompts["Tell_me_about_resume"])
     st.subheader("Tell_me_about_resume:")
@@ -281,6 +282,34 @@ if st.session_state.show_question_selection:
         st.subheader("Generated Questions:")
         st.write(all_questions)
 
+if st.session_state.show_question_selection:
+    
+    fields = st.multiselect("Select a field:", ["DSA"])
+    topic_mapping = {
+        "Data Scientist": ["EASY", "INTERMEDIATE", "ADVANCE"],
+    }
+    selected_topics = []
+    for field in fields:
+        selected_topics += st.multiselect(f"Select topics for {field}:", topic_mapping[field])
+
+    level = st.selectbox("Select Difficulty Level:", ["Easy", "Intermediate", "Difficult"])
+    num_questions = st.slider("Number of questions per topic:", 1, 20, 5)
+
+    generate_button = st.button("Generate")
+
+    if generate_button and fields and selected_topics:
+        all_questions = ""
+        
+        for topic in selected_topics:
+            prompt = f"Generate {num_questions} {level}-level interview questions on {topic} with answers."
+            response = get_gemini_response_question(prompt)
+            all_questions += f"\n\n### {topic} ({level})\n" + response
+        
+        st.subheader("Generated Questions:")
+        st.write(all_questions)
+
+
+
 if st.button("Ask") or query:
     if query:
         response = get_gemini_response_question(query)
@@ -296,4 +325,6 @@ if selected_company:
     for requirement in get_company_requirements(selected_company):
         st.write(f"✅ {requirement}")
 
+
 st.success("Stay ahead by mastering these skills!")
+
