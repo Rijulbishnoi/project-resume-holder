@@ -156,7 +156,7 @@ if audio_dict and "bytes" in audio_dict:
     # Get response from Gemini API
     if query and "sorry" not in query.lower():  # Skip if speech was not understood
         response = get_all_query(query)
-        st.subheader("Response:")
+        st.subheader("Response:",response)
         st.write(response)
     else:
         st.warning("Please try speaking again.")
