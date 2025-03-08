@@ -133,9 +133,7 @@ def recognize_speech(audio_bytes):
         return f"An error occurred: {e}"
 
 # Function to get response from Gemini API
-def get_all_query(query):
-    # Replace this with your actual Gemini API call
-    return f"Response to: {query}"
+
 
 # Streamlit UI
 
