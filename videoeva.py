@@ -40,17 +40,24 @@ def evaluate_candidate(job_description, video_path):
 
     # Use Gemini API to evaluate candidate
     prompt = f"""
-    You are an AI-powered hiring manager. Evaluate the candidate based on the following:
-    - Job Description: {job_description}
-    - Candidate's Speech Analysis:
-        - Average Pitch: {avg_pitch:.2f} Hz
-        - Pitch Variability: {pitch_variability:.2f}
-        - Confidence Score: {confidence_score:.1f}/100
+You are an AI-powered hiring manager. Evaluate the candidate based on the following:
+1. Job Description: {job_description}
+2. Candidate's Speech Analysis:
+   - Average Pitch: {avg_pitch:.2f} Hz
+   - Pitch Variability: {pitch_variability:.2f}
+   - Confidence Score: {confidence_score:.1f}/100
+3. Candidate's Project Knowledge (extracted from their audio):
+   - Analyze the candidate's audio to identify any projects they mention.
+   - Summarize the projects, including:
+     - Project goals
+     - Technologies used
+     - Outcomes or achievements
+   - Assess how well these projects align with the job requirements.
 
-    Provide a detailed evaluation:
-    1. Is the candidate qualified for the job? (Yes/No)
-    2. Strengths and weaknesses based on their speech.
-    3. Recommendations for improvement.
+Provide a detailed evaluation:
+1. Is the candidate qualified for the job? (Yes/No)
+2. Strengths and weaknesses based on their speech and project knowledge.
+3. Recommendations for improvement, including how they can better align their skills and projects with the job requirements.
     """
 
     model = genai.GenerativeModel('gemini-1.5-flash')
