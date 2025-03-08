@@ -97,26 +97,16 @@ def get_all_query(query):
     return response.text
 import streamlit as st
 import speech_recognition as sr
-from pydub import AudioSegment
+from streamlit_mic_recorder import mic_recorder
 import io
 
-def convert_to_wav(audio_file, format="mp3"):
-    """
-    Convert an audio file to WAV format using pydub.
-    """
-    audio = AudioSegment.from_file(audio_file, format=format)
-    wav_buffer = io.BytesIO()
-    audio.export(wav_buffer, format="wav")
-    wav_buffer.seek(0)
-    return wav_buffer
-
-def recognize_speech(audio_file):
-    """
-    Recognize speech from an audio file using speech_recognition.
-    """
+# Function to recognize speech from audio bytes
+def recognize_speech(audio_bytes):
     recognizer = sr.Recognizer()
     try:
-        with sr.AudioFile(audio_file) as source:
+        # Convert audio bytes to a format that speech_recognition can process
+        audio_buffer = io.BytesIO(audio_bytes)
+        with sr.AudioFile(audio_buffer) as source:
             recognizer.adjust_for_ambient_noise(source, duration=1)
             audio = recognizer.record(source)
             text = recognizer.recognize_google(audio)
@@ -126,28 +116,34 @@ def recognize_speech(audio_file):
     except sr.RequestError:
         return "Error connecting to speech recognition service."
 
-# Streamlit UI
-st.subheader("Upload Audio File")
-uploaded_file = st.file_uploader("Upload an audio file (WAV or MP3)...", type=["wav", "mp3"])
+# Function to get response from Gemini API
+def get_all_query(query):
+    # Replace this with your actual Gemini API call
+    return f"Response to: {query}"
 
-if uploaded_file:
-    st.success("Audio File Uploaded Successfully!")
+# Streamlit UI
+st.set_page_config(page_title="Speak and Get Response", layout="wide")
+st.header("Speak and Get Response 🎤")
+
+# Browser-based audio recorder
+st.subheader("Click to Speak")
+audio_dict = mic_recorder(start_prompt="🎤 Click to Speak", stop_prompt="⏹ Stop Recording", key="mic")
+
+# Process recorded audio
+if audio_dict and "bytes" in audio_dict:
+    st.success("Audio Recorded Successfully!")
     
-    # Convert the uploaded file to WAV format
-    if uploaded_file.type == "audio/mp3":
-        wav_buffer = convert_to_wav(uploaded_file, format="mp3")
-    else:
-        wav_buffer = io.BytesIO(uploaded_file.read())
-    
-    # Recognize speech from the WAV file
-    query = recognize_speech(wav_buffer)
+    # Recognize speech from the recorded audio
+    query = recognize_speech(audio_dict["bytes"])
     st.text_area("Recognized Text:", query)  # Show converted speech
     
-    # Process the recognized text
-    if query:
+    # Get response from Gemini API
+    if query and "sorry" not in query.lower():  # Skip if speech was not understood
         response = get_all_query(query)
         st.subheader("Response:")
         st.write(response)
+    else:
+        st.warning("Please try speaking again.")
 # Buttons for different actions
 submit_python = st.button("Python Questions")
 submit_ml = st.button("Machine Learning Questions")
