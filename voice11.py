@@ -95,16 +95,28 @@ def get_all_query(query):
     model = genai.GenerativeModel('gemini-1.5-flash')
     response = model.generate_content([query])
     return response.text
-from streamlit_mic_recorder import mic_recorder  # For browser-based audio recording
+import streamlit as st
 import speech_recognition as sr
+from pydub import AudioSegment
 import io
 
-def recognize_speech(audio_bytes):
+def convert_to_wav(audio_file, format="mp3"):
+    """
+    Convert an audio file to WAV format using pydub.
+    """
+    audio = AudioSegment.from_file(audio_file, format=format)
+    wav_buffer = io.BytesIO()
+    audio.export(wav_buffer, format="wav")
+    wav_buffer.seek(0)
+    return wav_buffer
+
+def recognize_speech(audio_file):
+    """
+    Recognize speech from an audio file using speech_recognition.
+    """
     recognizer = sr.Recognizer()
     try:
-        # Convert audio bytes to a format that speech_recognition can process
-        audio_buffer = io.BytesIO(audio_bytes)
-        with sr.AudioFile(audio_buffer) as source:
+        with sr.AudioFile(audio_file) as source:
             recognizer.adjust_for_ambient_noise(source, duration=1)
             audio = recognizer.record(source)
             text = recognizer.recognize_google(audio)
@@ -114,19 +126,28 @@ def recognize_speech(audio_bytes):
     except sr.RequestError:
         return "Error connecting to speech recognition service."
 
-# Voice Input Button
-st.subheader("Voice Input")
-audio_dict = mic_recorder(start_prompt="Click to Speak", stop_prompt="Stop Recording", key="mic")
+# Streamlit UI
+st.subheader("Upload Audio File")
+uploaded_file = st.file_uploader("Upload an audio file (WAV or MP3)...", type=["wav", "mp3"])
 
-if audio_dict and "bytes" in audio_dict:
-    st.success("Audio Recorded Successfully!")
-    query = recognize_speech(audio_dict["bytes"])
+if uploaded_file:
+    st.success("Audio File Uploaded Successfully!")
+    
+    # Convert the uploaded file to WAV format
+    if uploaded_file.type == "audio/mp3":
+        wav_buffer = convert_to_wav(uploaded_file, format="mp3")
+    else:
+        wav_buffer = io.BytesIO(uploaded_file.read())
+    
+    # Recognize speech from the WAV file
+    query = recognize_speech(wav_buffer)
     st.text_area("Recognized Text:", query)  # Show converted speech
+    
+    # Process the recognized text
     if query:
         response = get_all_query(query)
         st.subheader("Response:")
         st.write(response)
-
 # Buttons for different actions
 submit_python = st.button("Python Questions")
 submit_ml = st.button("Machine Learning Questions")
