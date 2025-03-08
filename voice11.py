@@ -95,18 +95,37 @@ def get_all_query(query):
     model = genai.GenerativeModel('gemini-1.5-flash')
     response = model.generate_content([query])
     return response.text
-def recognize_speech():
+from streamlit_mic_recorder import mic_recorder  # For browser-based audio recording
+import speech_recognition as sr
+import io
+
+def recognize_speech(audio_bytes):
     recognizer = sr.Recognizer()
-    with sr.Microphone() as source:
-        st.info("Listening... Speak now!")
-        try:
-            audio = recognizer.listen(source, timeout=5)
+    try:
+        # Convert audio bytes to a format that speech_recognition can process
+        audio_buffer = io.BytesIO(audio_bytes)
+        with sr.AudioFile(audio_buffer) as source:
+            recognizer.adjust_for_ambient_noise(source, duration=1)
+            audio = recognizer.record(source)
             text = recognizer.recognize_google(audio)
             return text
-        except sr.UnknownValueError:
-            return "Sorry, I couldn't understand the speech."
-        except sr.RequestError:
-            return "Error connecting to speech recognition service."
+    except sr.UnknownValueError:
+        return "Sorry, I couldn't understand the speech."
+    except sr.RequestError:
+        return "Error connecting to speech recognition service."
+
+# Voice Input Button
+st.subheader("Voice Input")
+audio_dict = mic_recorder(start_prompt="Click to Speak", stop_prompt="Stop Recording", key="mic")
+
+if audio_dict and "bytes" in audio_dict:
+    st.success("Audio Recorded Successfully!")
+    query = recognize_speech(audio_dict["bytes"])
+    st.text_area("Recognized Text:", query)  # Show converted speech
+    if query:
+        response = get_all_query(query)
+        st.subheader("Response:")
+        st.write(response)
 
 # Buttons for different actions
 submit_python = st.button("Python Questions")
@@ -302,24 +321,6 @@ elif submit_docker:
                        mime="application/pdf")
 
 # Text Input
-query = st.text_input("HelpDesk", key="text_query")
-
-# Voice Input Button
-if st.button("🎤 Speak"):
-    query = recognize_speech()
-    st.text_area("Recognized Text:", query)  # Show converted speech
-    if query:
-        response = get_all_query(query)
-        st.subheader("Response:")
-        st.write(response)
-# Process Input and Get Response
-if st.button("Ask"):
-    if query:
-        response = get_all_query(query)
-        st.subheader("Response:")
-        st.write(response)
-    else:
-        st.warning("Please enter or speak a query!")
 
 
     
