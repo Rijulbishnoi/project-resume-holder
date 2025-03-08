@@ -122,7 +122,7 @@ def get_all_query(query):
     return f"Response to: {query}"
 
 # Streamlit UI
-st.set_page_config(page_title="Speak and Get Response", layout="wide")
+
 st.header("Speak and Get Response 🎤")
 
 # Browser-based audio recorder
