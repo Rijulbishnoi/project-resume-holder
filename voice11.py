@@ -98,15 +98,29 @@ def get_all_query(query):
 import streamlit as st
 import speech_recognition as sr
 from streamlit_mic_recorder import mic_recorder
+from pydub import AudioSegment
 import io
+
+# Function to convert WebM/Opus to WAV
+def convert_to_wav(audio_bytes):
+    """
+    Convert WebM/Opus audio bytes to WAV format using pydub.
+    """
+    audio = AudioSegment.from_file(io.BytesIO(audio_bytes), format="webm")
+    wav_buffer = io.BytesIO()
+    audio.export(wav_buffer, format="wav")
+    wav_buffer.seek(0)
+    return wav_buffer
 
 # Function to recognize speech from audio bytes
 def recognize_speech(audio_bytes):
     recognizer = sr.Recognizer()
     try:
-        # Convert audio bytes to a format that speech_recognition can process
-        audio_buffer = io.BytesIO(audio_bytes)
-        with sr.AudioFile(audio_buffer) as source:
+        # Convert audio bytes to WAV format
+        wav_buffer = convert_to_wav(audio_bytes)
+        
+        # Recognize speech from the WAV file
+        with sr.AudioFile(wav_buffer) as source:
             recognizer.adjust_for_ambient_noise(source, duration=1)
             audio = recognizer.record(source)
             text = recognizer.recognize_google(audio)
@@ -115,6 +129,8 @@ def recognize_speech(audio_bytes):
         return "Sorry, I couldn't understand the speech."
     except sr.RequestError:
         return "Error connecting to speech recognition service."
+    except Exception as e:
+        return f"An error occurred: {e}"
 
 # Function to get response from Gemini API
 def get_all_query(query):

@@ -23,3 +23,7 @@ numpy==1.26.4
 pillow
 proglog
 python-dotenv
+streamlit
+speechrecognition
+streamlit-mic-recorder
+pydub
