@@ -8,6 +8,10 @@ import pdf2image
 import google.generativeai as genai
 from fpdf import FPDF
 import requests  # Needed for downloading the font file
+import speech_recognition as sr
+from streamlit_mic_recorder import mic_recorder
+from pydub import AudioSegment  # Import pydub for audio processing
+
 
 # Load environment variables
 load_dotenv()

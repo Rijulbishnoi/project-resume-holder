@@ -11,6 +11,13 @@ from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 import requests
+import speech_recognition as sr
+from streamlit_mic_recorder import mic_recorder
+from pydub import AudioSegment
+import librosa
+import numpy as np
+import tempfile
+
 
 
 # Load environment variables
@@ -485,3 +492,45 @@ if uploaded_video and job_description:
     # Clean up temporary files
     os.remove(video_path)
     os.remove(video_path.replace(".mp4", ".wav"))
+    st.subheader("Voice Input")
+audio_dict = mic_recorder(start_prompt="Click to Speak", stop_prompt="Stop Recording", key="mic")
+def get_all_query(query):
+    model = genai.GenerativeModel('gemini-1.5-flash')
+    response = model.generate_content([query])
+    return response.text
+query = st.text_input("HelpDesk", key="text_query")
+if audio_dict and "bytes" in audio_dict:
+    st.success("Audio Recorded Successfully!")
+    try:
+        # Convert recorded audio to WAV format using pydub
+        audio_bytes = audio_dict["bytes"]
+        audio_segment = AudioSegment.from_file(io.BytesIO(audio_bytes), format="webm")  # Assuming webm format
+        wav_buffer = io.BytesIO()
+        audio_segment.export(wav_buffer, format="wav")  # Export to WAV format
+        wav_buffer.seek(0)
+
+        # Use speech_recognition to process the WAV file
+        recognizer = sr.Recognizer()
+        with sr.AudioFile(wav_buffer) as source:
+            recognizer.adjust_for_ambient_noise(source, duration=1)  # Reduce background noise
+            audio = recognizer.record(source)  # Record the entire audio file
+            recognized_text = recognizer.recognize_google(audio)  # Perform speech recognition
+
+            st.text_area("Recognized Text:", recognized_text)  # Display the recognized text
+            query = recognized_text  # Set recognized text as query
+
+    except sr.UnknownValueError as e:
+        st.warning(f"Could not understand the audio. Please try again in a quiet environment and speak clearly.{e}")
+    except sr.RequestError:
+        st.warning("Error connecting to the speech recognition service. Please check your internet connection.")
+    except Exception as e:
+        st.warning(f"An error occurred: {e}")
+
+# Button to submit the query
+if st.button("Ask") or query:
+    if query:
+        response = get_all_query(query)
+        st.subheader("Response:")
+        st.write(response)
+    else:
+        st.warning("Please enter or speak a query!")
