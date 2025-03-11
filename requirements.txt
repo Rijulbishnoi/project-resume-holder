@@ -27,3 +27,4 @@ streamlit
 speechrecognition
 streamlit-mic-recorder
 pydub
+youtube-transcript-api
