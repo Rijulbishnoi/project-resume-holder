@@ -556,7 +556,7 @@ with st.container():
                 audio = recognizer.record(source)  # Record the entire audio file
                 recognized_text = recognizer.recognize_google(audio)  # Perform speech recognition
 
-                st.text_area("Recognized Text:", recognized_text)  # Display the recognized text
+                st.text_area("Recognized Text:", recognized_text,key="recognized_text_area_1")  # Display the recognized text
                 query1 = recognized_text  # Set recognized text as query
                 
                 if query1:
@@ -632,7 +632,7 @@ if 'started' in st.session_state and st.session_state.started:
                     audio = recognizer.record(source)  # Record the entire audio file
                     recognized_text2 = recognizer.recognize_google(audio)  # Perform speech recognition
 
-                    st.text_area("Recognized Text:", recognized_text2)  # Display the recognized text
+                    st.text_area("Recognized Text:", recognized_text2, key="recognized_answer_area_1")  # Display the recognized text
                     query2 = recognized_text2  # Set recognized text as query
                 
                     if query1:
