@@ -630,15 +630,18 @@ if 'started' in st.session_state and st.session_state.started:
                 with sr.AudioFile(wav_buffer) as source:
                     recognizer.adjust_for_ambient_noise(source, duration=1)  # Reduce background noise
                     audio = recognizer.record(source)  # Record the entire audio file
-                    recognized_text = recognizer.recognize_google(audio)  # Perform speech recognition
+                    recognized_text2 = recognizer.recognize_google(audio)  # Perform speech recognition
 
-                    st.text_area("Recognized Text:", recognized_text)  # Display the recognized text
-                    query1 = recognized_text  # Set recognized text as query
+                    st.text_area("Recognized Text:", recognized_text2)  # Display the recognized text
+                    query2 = recognized_text2  # Set recognized text as query
                 
                     if query1:
                         response = get_gemini_response1(query1)
                         st.subheader("Response:")
                         st.write(response)
+                    
+                    recognized_text2 = recognizer.recognize_google(audio)
+                    st.text_area("Recognized Answer:", recognized_text2)
 
             except sr.UnknownValueError as e:
                 st.warning(f"Could not understand the audio. Please try again in a quiet environment and speak clearly.{e}")
@@ -651,11 +654,11 @@ if 'started' in st.session_state and st.session_state.started:
                     """Evaluate the answer and return feedback."""
                     return get_gemini_response(f"Evaluate this answer in terms of correctness, clarity, and depth: {answer}")
 
-                evaluation = evaluate_answer(recognized_text)
+                evaluation = evaluate_answer(recognized_text2)
                 st.subheader("Evaluation:")
                 st.write(evaluation)
 
-                st.session_state.answers.append(recognized_text)
+                st.session_state.answers.append(recognized_text2)
 
                 # Adjust difficulty based on evaluation
                 if "good" in evaluation.lower():
