@@ -536,7 +536,7 @@ if uploaded_video and job_description:
 )
 
 # Audio recording and processing
-audio_dict = mic_recorder(start_prompt="Click to Speak", stop_prompt="Stop Recording", key="mic")
+audio_dict = mic_recorder(start_prompt="Click to Speak", stop_prompt="Stop Recording", key="mic_1")
 
 # Create a container for the top-right UI
 with st.container():
@@ -635,7 +635,7 @@ if 'recognized_text_2' not in st.session_state:
 st.title("My App")
 
 # First "Click to Speak" Section
-audio_dict = mic_recorder(start_prompt="Click to Speak", stop_prompt="Stop Recording", key="mic")
+audio_dict = mic_recorder(start_prompt="Click to Speak", stop_prompt="Stop Recording", key="mic_1")
 
 if audio_dict and "bytes" in audio_dict:
     st.success("Audio Recorded Successfully!")
