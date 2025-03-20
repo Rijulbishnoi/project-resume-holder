@@ -540,7 +540,7 @@ if uploaded_video and job_description:
 )
 
 # Audio recording and processing
-audio_dict = mic_recorder(start_prompt="Click to Speak", stop_prompt="Stop Recording", key="mic_1")
+
 
 # Create a container for the top-right UI
 with st.container():
@@ -746,7 +746,7 @@ if 'started' in st.session_state and st.session_state.started:
                 st.warning("Error connecting to the speech recognition service.")
             except Exception as e:
                 st.warning(f"An error occurred: {e}")
-                
+
     # Provide overall feedback after 3-4 answers
     if len(st.session_state.answers) >= 3:
         combined_answers = "\n".join(st.session_state.answers)
