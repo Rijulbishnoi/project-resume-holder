@@ -17,6 +17,7 @@ from pydub import AudioSegment
 import librosa
 import numpy as np
 import tempfile
+from youtube_transcript_api import YouTubeTranscriptApi
 
 
 
@@ -414,13 +415,13 @@ if selected_company:
     if jobs:
         for job in jobs:
             st.markdown(f"### {job.get('job_title', 'Job Title Not Available')}")
-            st.write(f"*Company:* {job.get('employer_name', 'N/A')}")
-            st.write(f"*Location:* {job.get('job_city', 'Unknown')}, {job.get('job_country', 'Unknown')}")
-            st.write(f"*Description:* {job.get('job_description', 'No description available.')}")
+            st.write(f"Company: {job.get('employer_name', 'N/A')}")
+            st.write(f"Location: {job.get('job_city', 'Unknown')}, {job.get('job_country', 'Unknown')}")
+            st.write(f"Description: {job.get('job_description', 'No description available.')}")
             st.markdown(f"[Apply Here]({job.get('job_apply_link', '#')})")
             st.write("---")
     else:
-        st.write("No job listings found. Try again later!")
+        st.write("No job listings found. Try again later!")
 
 def evaluate_candidate(job_description, video_path):
     # Extract audio from video
@@ -537,7 +538,12 @@ with st.container():
                 recognized_text = recognizer.recognize_google(audio)  # Perform speech recognition
 
                 st.text_area("Recognized Text:", recognized_text)  # Display the recognized text
-                query = recognized_text  # Set recognized text as query
+                query1 = recognized_text  # Set recognized text as query
+                
+                if query1:
+                    response = get_gemini_response(query1)
+                    st.subheader("Response:")
+                    st.write(response)
 
         except sr.UnknownValueError as e:
             st.warning(f"Could not understand the audio. Please try again in a quiet environment and speak clearly.{e}")
@@ -547,7 +553,7 @@ with st.container():
             st.warning(f"An error occurred: {e}")
 
     # Text input for query
-    query = st.text_input("HelpDesk", key="text_query")
+    query= st.text_input("HelpDesk", key="text_query")
 
     # Button to submit the query
     if st.button("Ask") or query:
@@ -559,3 +565,154 @@ with st.container():
             st.warning("Please enter or speak a query!")
 
     st.markdown('</div>', unsafe_allow_html=True)
+
+def generate_question(level, topic):
+    """Generate a structured interview question."""
+    query = f"Ask a concise, one-line {level} level theoretical {topic} interview question that assesses the candidate’s conceptual understanding."
+    return get_gemini_response(query)
+
+# Streamlit UI
+st.title("AI-Powered Mock Interview System")
+
+# User selects topic & difficulty level
+topic = st.radio("Select Topic:", ("Python", "SQL"))
+level = st.radio("Select Difficulty:", ("Easy", "Intermediate", "Hard"))
+
+if 'answers' not in st.session_state:
+    st.session_state.answers = []
+
+if 'question' not in st.session_state:
+    st.session_state.question = None  # No question until interview starts
+
+# Button to start the interview session
+if st.button("Start Interview"):
+    st.session_state.question = generate_question(level, topic)
+    st.session_state.started = True  # Mark interview as started
+    st.rerun()
+
+# Display the first question only after clicking "Start Interview"
+if 'started' in st.session_state and st.session_state.started:
+    st.write(f"**Question:** {st.session_state.question}")
+
+    # Button to start speaking
+    if st.button("Click to Speak Your Answer"):
+        recognizer = sr.Recognizer()
+        with sr.Microphone() as source:
+            st.info("Listening... Please speak your answer.")
+            recognizer.adjust_for_ambient_noise(source)
+            audio = recognizer.listen(source)
+
+            try:
+                recognized_text = recognizer.recognize_google(audio)
+                st.text_area("Recognized Answer:", recognized_text)
+
+                def evaluate_answer(answer):
+                    """Evaluate the answer and return feedback."""
+                    return get_gemini_response(f"Evaluate this answer in terms of correctness, clarity, and depth: {answer}")
+
+                evaluation = evaluate_answer(recognized_text)
+                st.subheader("Evaluation:")
+                st.write(evaluation)
+
+                st.session_state.answers.append(recognized_text)
+
+                # Adjust difficulty based on evaluation
+                if "good" in evaluation.lower():
+                    level = "Intermediate" if level == "Easy" else "Hard"
+                elif "poor" in evaluation.lower():
+                    level = "Easy"
+
+                st.session_state.question = generate_question(level, topic)
+                st.rerun()
+
+            except sr.UnknownValueError:
+                st.warning("Could not understand the audio. Please try again in a quiet environment.")
+            except sr.RequestError:
+                st.warning("Error connecting to the speech recognition service.")
+            except Exception as e:
+                st.warning(f"An error occurred: {e}")
+
+    # Provide overall feedback after 3-4 answers
+    if len(st.session_state.answers) >= 3:
+        combined_answers = "\n".join(st.session_state.answers)
+        feedback = get_gemini_response(f"Provide an overall feedback for these answers and suggest improvements: {combined_answers}")
+        st.subheader("Overall Feedback:")
+        st.write(feedback)
+
+def get_youtube_transcript(video_id):
+    try:
+        transcript = YouTubeTranscriptApi.get_transcript(video_id,languages=['en'])
+        full_transcript = " ".join([entry['text'] for entry in transcript])
+        return full_transcript
+    except Exception as e:
+        st.error(f"Failed to fetch transcript: {str(e)}")
+        return None
+
+# Function to generate summary and insights using Gemini API
+def generate_summary_and_insights(transcript):
+    if not transcript:
+        return "Error: No transcript available."
+    
+    prompt = f"""
+
+Analyze the transcript of the video and break it down into key concepts, sections, or steps. For each part of the transcript, provide a brief explanation, highlight important points, and include relevant images or diagrams that clarify the concepts discussed. Organize the transcript into clear sections with visual aids where applicable to better understand the material. If there are any technical terms or complex ideas, explain them in simpler terms and use visuals to enhance understanding.
+.Also show the visual aids diagram
+
+
+    Transcript:
+    {transcript}
+    """
+    
+    try:
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        response = model.generate_content(prompt)
+        if hasattr(response, 'text') and response.text:
+            return response.text
+        else:
+            return "Error: No valid response received from Gemini API."
+    except Exception as e:
+        return f"Error: {str(e)}"
+
+# Streamlit UI for YouTube Video Analysis
+
+    
+st.markdown("---")
+st.markdown("<h1 style='text-align: center; color: #4CAF50;'>YouTube Video Analyzer</h1>", unsafe_allow_html=True)
+st.markdown("---")
+
+    # Input for YouTube video link
+youtube_link = st.text_input("Enter YouTube Video Link:")
+
+if youtube_link:
+        try:
+            # Extract video ID from the link
+            if "v=" in youtube_link:
+                video_id = youtube_link.split("v=")[1].split("&")[0]
+            else:
+                video_id = youtube_link  # Assume the user directly entered the video ID
+            
+            # Fetch transcript
+            with st.spinner("⏳ Fetching transcript..."):
+                transcript = get_youtube_transcript(video_id)
+            
+            if transcript:
+                
+                
+                # Generate summary and insights
+                with st.spinner("⏳ Generating summary and insights..."):
+                    insights = generate_summary_and_insights(transcript)
+                
+                st.subheader("Summary and Insights:")
+                st.write(insights)
+                
+                # Download insights as a text file
+                st.download_button(
+                    label="💾 Download Insights",
+                    data=insights,
+                    file_name="youtube_insights.txt",
+                    mime="text/plain"
+                )
+            else:
+                st.warning("⚠ Failed to fetch transcript. Please check the video link.")
+        except Exception as e:
+            st.error(f"❌ Error processing video: {str(e)}")

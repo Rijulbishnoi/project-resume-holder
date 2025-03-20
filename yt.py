@@ -18,7 +18,7 @@ genai.configure(api_key=API_KEY)
 # Function to fetch YouTube video transcript
 def get_youtube_transcript(video_id):
     try:
-        transcript = YouTubeTranscriptApi.get_transcript(video_id,languages=['en-IN','en'])
+        transcript = YouTubeTranscriptApi.get_transcript(video_id,languages=['en'])
         full_transcript = " ".join([entry['text'] for entry in transcript])
         return full_transcript
     except Exception as e:
