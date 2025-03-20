@@ -49,6 +49,25 @@ def get_gemini_response(prompt):
     except Exception as e:
         st.error(f"API call failed: {str(e)}")
         return f"Error: {str(e)}"
+def get_gemini_response1(prompt):
+    """Generate a response using Google Gemini API."""
+    if not prompt.strip():
+        return "Error: Prompt is empty. Please provide a valid prompt."
+    
+    try:
+        # Call Gemini API
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        response = model.generate_content([prompt, f"Add unique variations each time this prompt is called: {os.urandom(8).hex()}"])
+        
+        # Check if the response contains valid text
+        if hasattr(response, 'text') and response.text:
+            return response.text
+        else:
+            return "Error: No valid response received from Gemini API."
+    
+    except Exception as e:
+        st.error(f"API call failed: {str(e)}")
+        return f"Error: {str(e)}"
 
 st.set_page_config(page_title="A5 ATS Resume Expert", layout='wide')
 
@@ -541,7 +560,7 @@ with st.container():
                 query1 = recognized_text  # Set recognized text as query
                 
                 if query1:
-                    response = get_gemini_response(query1)
+                    response = get_gemini_response1(query1)
                     st.subheader("Response:")
                     st.write(response)
 
@@ -596,15 +615,37 @@ if 'started' in st.session_state and st.session_state.started:
 
     # Button to start speaking
     if st.button("Click to Speak Your Answer"):
-        recognizer = sr.Recognizer()
-        with sr.Microphone() as source:
-            st.info("Listening... Please speak your answer.")
-            recognizer.adjust_for_ambient_noise(source)
-            audio = recognizer.listen(source)
-
+        if audio_dict and "bytes" in audio_dict:
+            st.success("Audio Recorded Successfully!")
             try:
-                recognized_text = recognizer.recognize_google(audio)
-                st.text_area("Recognized Answer:", recognized_text)
+                # Convert recorded audio to WAV format using pydub
+                audio_bytes = audio_dict["bytes"]
+                audio_segment = AudioSegment.from_file(io.BytesIO(audio_bytes), format="webm")  # Assuming webm format
+                wav_buffer = io.BytesIO()
+                audio_segment.export(wav_buffer, format="wav")  # Export to WAV format
+                wav_buffer.seek(0)
+
+            # Use speech_recognition to process the WAV file
+                recognizer = sr.Recognizer()
+                with sr.AudioFile(wav_buffer) as source:
+                    recognizer.adjust_for_ambient_noise(source, duration=1)  # Reduce background noise
+                    audio = recognizer.record(source)  # Record the entire audio file
+                    recognized_text = recognizer.recognize_google(audio)  # Perform speech recognition
+
+                    st.text_area("Recognized Text:", recognized_text)  # Display the recognized text
+                    query1 = recognized_text  # Set recognized text as query
+                
+                    if query1:
+                        response = get_gemini_response1(query1)
+                        st.subheader("Response:")
+                        st.write(response)
+
+            except sr.UnknownValueError as e:
+                st.warning(f"Could not understand the audio. Please try again in a quiet environment and speak clearly.{e}")
+            except sr.RequestError:
+                st.warning("Error connecting to the speech recognition service. Please check your internet connection.")
+            except Exception as e:
+                st.warning(f"An error occurred: {e}")
 
                 def evaluate_answer(answer):
                     """Evaluate the answer and return feedback."""
