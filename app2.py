@@ -651,7 +651,7 @@ if 'recognized_text_2' not in st.session_state:
 st.title("My App")
 
 # First "Click to Speak" Section
-audio_dict = mic_recorder(start_prompt="Click to Speak", stop_prompt="Stop Recording", key="mic_1")
+audio_dict = mic_recorder(start_prompt="Click to Speak", stop_prompt="Stop Recording", key="mic_2")
 
 if audio_dict and "bytes" in audio_dict:
     st.success("Audio Recorded Successfully!")
