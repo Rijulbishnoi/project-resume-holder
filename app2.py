@@ -25,6 +25,10 @@ if 'recognized_text_1' not in st.session_state:
 if 'recognized_text_2' not in st.session_state:
     st.session_state.recognized_text_2 = ""
 
+# Initialize session state for mic_recorder
+if "mic_initialized" not in st.session_state:
+    st.session_state.mic_initialized = False
+
 # Load environment variables
 load_dotenv()
 
@@ -544,11 +548,16 @@ with st.container():
 
     # Display the audio recorder
     # First "Click to Speak" Section
-if audio_dict and "bytes" in audio_dict:
+if not st.session_state.mic_initialized:
+    st.session_state.audio_dict = mic_recorder(start_prompt="Click to Speak", stop_prompt="Stop Recording", key="mic_1")
+    st.session_state.mic_initialized = True
+
+# Check if audio is recorded
+if st.session_state.audio_dict and "bytes" in st.session_state.audio_dict:
     st.success("Audio Recorded Successfully!")
     try:
         # Convert recorded audio to WAV format using pydub
-        audio_bytes = audio_dict["bytes"]
+        audio_bytes = st.session_state.audio_dict["bytes"]
         audio_segment = AudioSegment.from_file(io.BytesIO(audio_bytes), format="webm")  # Assuming webm format
         wav_buffer = io.BytesIO()
         audio_segment.export(wav_buffer, format="wav")  # Export to WAV format
@@ -572,6 +581,13 @@ if audio_dict and "bytes" in audio_dict:
                 response = get_gemini_response1(query1)
                 st.subheader("Response:")
                 st.write(response)
+
+    except sr.UnknownValueError as e:
+        st.warning(f"Could not understand the audio. Please try again in a quiet environment and speak clearly.{e}")
+    except sr.RequestError:
+        st.warning("Error connecting to the speech recognition service. Please check your internet connection.")
+    except Exception as e:
+        st.warning(f"An error occurred: {e}")
 
     except sr.UnknownValueError as e:
         st.warning(f"Could not understand the audio. Please try again in a quiet environment and speak clearly.{e}")
@@ -674,18 +690,19 @@ if audio_dict and "bytes" in audio_dict:
         st.warning(f"An error occurred: {e}")
 
 # Mock Interview Section
+# Mock Interview Section
 if 'started' in st.session_state and st.session_state.started:
     st.write(f"**Question:** {st.session_state.question}")
 
     # Button to start speaking for the mock interview
     if st.button("Click to Speak Your Answer", key="mock_interview_speak_button"):
-        audio_dict_mock = mic_recorder(start_prompt="Click to Speak", stop_prompt="Stop Recording", key="mic_mock_interview")
+        st.session_state.audio_dict_mock = mic_recorder(start_prompt="Click to Speak", stop_prompt="Stop Recording", key="mic_mock_interview")
 
-        if audio_dict_mock and "bytes" in audio_dict_mock:
+        if st.session_state.audio_dict_mock and "bytes" in st.session_state.audio_dict_mock:
             st.success("Audio Recorded Successfully!")
             try:
                 # Convert recorded audio to WAV format using pydub
-                audio_bytes = audio_dict_mock["bytes"]
+                audio_bytes = st.session_state.audio_dict_mock["bytes"]
                 audio_segment = AudioSegment.from_file(io.BytesIO(audio_bytes), format="webm")  # Assuming webm format
                 wav_buffer = io.BytesIO()
                 audio_segment.export(wav_buffer, format="wav")  # Export to WAV format
@@ -729,7 +746,7 @@ if 'started' in st.session_state and st.session_state.started:
                 st.warning("Error connecting to the speech recognition service.")
             except Exception as e:
                 st.warning(f"An error occurred: {e}")
-
+                
     # Provide overall feedback after 3-4 answers
     if len(st.session_state.answers) >= 3:
         combined_answers = "\n".join(st.session_state.answers)
