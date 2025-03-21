@@ -608,7 +608,7 @@ if st.session_state.audio_dict and "bytes" in st.session_state.audio_dict:
             st.warning("Please enter or speak a query!")
 
     st.markdown('</div>', unsafe_allow_html=True)
-
+'''
 def generate_question(level, topic):
     """Generate a structured interview question."""
     query = f"Ask a concise, one-line {level} level theoretical {topic} interview question that assesses the candidate’s conceptual understanding."
@@ -685,6 +685,7 @@ if audio_dict and "bytes" in audio_dict:
         st.warning("Error connecting to the speech recognition service. Please check your internet connection.")
     except Exception as e:
         st.warning(f"An error occurred: {e}")
+'''
 '''
 # Mock Interview Section
 # Mock Interview Section
@@ -866,19 +867,16 @@ if 'topic' not in st.session_state:
 if 'difficulty' not in st.session_state:
     st.session_state.difficulty = "Easy"  # Default difficulty
 
-if 'recording' not in st.session_state:
-    st.session_state.recording = False  # To track recording state
-
-# Function to generate unique questions using Gemini API
+# Function to generate unique theoretical questions using Gemini API
 def generate_question(topic, difficulty, question_number):
-    """Generate a unique question using the Gemini API."""
+    """Generate a unique theoretical question using the Gemini API."""
     try:
         prompt = f"""
-        Generate question which should be different from one another  {difficulty.lower()} level interview question on {topic}. 
+        Generate a unique {difficulty.lower()} level interview question on {topic}. 
         The question should be theoretical in nature and cover a different aspect of {topic} compared to previous questions. 
         Avoid repeating similar concepts or phrasing. This is question number {question_number}.
         """
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-pro')
         response = model.generate_content(prompt)
         return response.text
     except Exception as e:
@@ -893,29 +891,35 @@ def evaluate_answer(question, answer):
         Answer: {answer}
         Evaluate this answer in terms of correctness, clarity, and depth. Provide constructive feedback.
         """
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-pro')
         response = model.generate_content(prompt)
         return response.text
     except Exception as e:
         return f"Error: {e}"
 
-# Function to handle recording and transcription
-def record_and_transcribe():
-    """Record audio and transcribe it into text."""
+# Function to transcribe uploaded audio files
+def transcribe_audio(audio_file):
+    """Transcribe an uploaded audio file into text."""
     recognizer = sr.Recognizer()
-    with sr.Microphone() as source:
-        st.write("Recording... Speak now!")
-        audio = recognizer.listen(source)
-        st.write("Recording stopped. Processing...")
+    try:
+        # Convert the uploaded file to WAV format using pydub
+        audio_segment = AudioSegment.from_file(audio_file)
+        wav_buffer = io.BytesIO()
+        audio_segment.export(wav_buffer, format="wav")
+        wav_buffer.seek(0)
 
-        try:
-            # Recognize speech using Google Speech Recognition
-            recognized_text = recognizer.recognize_google(audio)
+        # Use speech_recognition to process the WAV file
+        with sr.AudioFile(wav_buffer) as source:
+            recognizer.adjust_for_ambient_noise(source, duration=1)  # Reduce background noise
+            audio = recognizer.record(source)  # Record the entire audio file
+            recognized_text = recognizer.recognize_google(audio)  # Perform speech recognition
             return recognized_text
-        except sr.UnknownValueError:
-            return "Error: Could not understand the audio."
-        except sr.RequestError:
-            return "Error: Could not request results from the speech recognition service."
+    except sr.UnknownValueError:
+        return "Error: Could not understand the audio."
+    except sr.RequestError:
+        return "Error: Could not request results from the speech recognition service."
+    except Exception as e:
+        return f"Error: {e}"
 
 # Sidebar for settings
 st.sidebar.write("### Mock Interview Settings")
@@ -942,12 +946,16 @@ if st.session_state.questions and not st.session_state.submitted:
     for i, question in enumerate(st.session_state.questions):
         st.write(f"**Question {i + 1}:** {question}")
 
-        # Start and stop recording buttons
-        if st.button(f"Start Recording for Question {i + 1}", key=f"start_button_{i}"):
-            st.session_state.recording = True
-            recognized_text = record_and_transcribe()
+        # File upload for audio response
+        audio_file = st.file_uploader(
+            f"Upload your audio response for Question {i + 1} (WAV or MP3)", 
+            type=["wav", "mp3"], 
+            key=f"audio_uploader_{i}"
+        )
+
+        if audio_file:
+            recognized_text = transcribe_audio(audio_file)
             st.session_state.recognized_texts[i] = recognized_text
-            st.session_state.recording = False
 
         # Display the recognized text
         if i in st.session_state.recognized_texts:
