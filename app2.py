@@ -44,6 +44,7 @@ API_KEY2 = os.getenv("JSEARCH_API_KEY")
 
 
 def get_gemini_response(prompt):
+
     """Generate a response using Google Gemini API."""
     if not prompt.strip():
         return "Error: Prompt is empty. Please provide a valid prompt."
@@ -117,7 +118,7 @@ response_container = st.container()
 #     response_container = st.empty()
 
 # Button actions
-if st.button("📖 Tell Me About the Resume"):
+if st.button("📖 Tell Me About the Resume", key="resume_info"):
     with st.spinner("⏳ Loading... Please wait"):
         if resume_text:
             response = get_gemini_response(f"Please review the following resume and provide a detailed evaluation: {resume_text}")
@@ -126,7 +127,7 @@ if st.button("📖 Tell Me About the Resume"):
         else:
             st.warning("⚠ Please upload a valid resume first.")
 
-if st.button("📊 Percentage Match"):
+if st.button("📊 Percentage Match", key="percentage_match"):
     with st.spinner("⏳ Loading... Please wait"):
         if resume_text and input_text:
             response = get_gemini_response(f"Evaluate the following resume against this job description and provide a percentage match in first :\n\nJob Description:\n{input_text}\n\nResume:\n{resume_text}")
@@ -136,7 +137,7 @@ if st.button("📊 Percentage Match"):
             st.warning("⚠ Please upload a resume and provide a job description.")
 
 learning_path_duration = st.selectbox("📆 Select Personalized Learning Path Duration:", ["3 Months", "6 Months", "9 Months", "12 Months"])
-if st.button("🎓 Personalized Learning Path"):
+if st.button("🎓 Personalized Learning Path", key="learning_path"):
     with st.spinner("⏳ Loading... Please wait"):
         if resume_text and input_text and learning_path_duration:
             response = get_gemini_response(f"Create a detailed and structured personalized learning path for a duration of {learning_path_duration} based on the resume and job description:\n\nJob Description:\n{input_text}\n\nResume:\n{resume_text} and also suggest books and other important thing")
@@ -491,9 +492,6 @@ Provide a detailed evaluation:
 3. Recommendations for improvement, including how they can better align their skills and projects with the job requirements.
     """
 
-    model = genai.GenerativeModel('gemini-1.5-flash')
-    response = model.generate_content(prompt)
-    return response.text
 
 # Streamlit App
 st.title("Job Candidate Evaluation")
@@ -538,230 +536,192 @@ if uploaded_video and job_description:
     """,
     unsafe_allow_html=True
 )
+import streamlit as st
+import io
+from pydub import AudioSegment
+import speech_recognition as sr
+from streamlit_mic_recorder import mic_recorder
+import os
+from dotenv import load_dotenv
+import google.generativeai as genai
 
-# Audio recording and processing
+# Load environment variables
+load_dotenv()
 
+# Configure Google Gemini API
+API_KEY = os.getenv("GOOGLE_API_KEY")
+if not API_KEY:
+    st.error("GOOGLE_API_KEY not found. Please set it in your environment variables.")
+    st.stop()
 
-# Create a container for the top-right UI
-with st.container():
-    st.markdown('<div class="top-right">', unsafe_allow_html=True)
+genai.configure(api_key=API_KEY)
 
-    # Display the audio recorder
-    # First "Click to Speak" Section
-if not st.session_state.mic_initialized:
-    st.session_state.audio_dict = mic_recorder(start_prompt="Click to Speak", stop_prompt="Stop Recording", key="mic_1")
-    st.session_state.mic_initialized = True
+# Session state initialization
+if 'recognized_text_1' not in st.session_state:
+    st.session_state.recognized_text_1 = ""  # For general voice queries
+if 'recognized_text_2' not in st.session_state:
+    st.session_state.recognized_text_2 = ""  # For mock interview answers
+if 'answers' not in st.session_state:
+    st.session_state.answers = []  # Store answers for all questions
+if 'questions' not in st.session_state:
+    st.session_state.questions = []  # Store the three questions
+if 'current_question_index' not in st.session_state:
+    st.session_state.current_question_index = 0  # Track which question is being answered
+if 'started' not in st.session_state:
+    st.session_state.started = False
+if 'difficulty' not in st.session_state:
+    st.session_state.difficulty = "Easy"
+if 'interview_complete' not in st.session_state:
+    st.session_state.interview_complete = False
+if 'audio_dict_mock' not in st.session_state:
+    st.session_state.audio_dict_mock = None  # Store audio dict for mock interview
+if 'used_questions' not in st.session_state:
+    st.session_state.used_questions = []  # Track all questions asked in the session
 
-# Check if audio is recorded
-if st.session_state.audio_dict and "bytes" in st.session_state.audio_dict:
-    st.success("Audio Recorded Successfully!")
+# Function to get response from Gemini API
+def get_gemini_response(prompt):
+    """Generate a response using Google Gemini API."""
     try:
-        # Convert recorded audio to WAV format using pydub
-        audio_bytes = st.session_state.audio_dict["bytes"]
-        audio_segment = AudioSegment.from_file(io.BytesIO(audio_bytes), format="webm")  # Assuming webm format
-        wav_buffer = io.BytesIO()
-        audio_segment.export(wav_buffer, format="wav")  # Export to WAV format
-        wav_buffer.seek(0)
-
-        # Use speech_recognition to process the WAV file
-        recognizer = sr.Recognizer()
-        with sr.AudioFile(wav_buffer) as source:
-            recognizer.adjust_for_ambient_noise(source, duration=1)  # Reduce background noise
-            audio = recognizer.record(source)  # Record the entire audio file
-            recognized_text = recognizer.recognize_google(audio)  # Perform speech recognition
-
-            # Store the recognized text in session state
-            st.session_state.recognized_text_1 = recognized_text
-
-            # Display the recognized text with a unique key
-            st.text_area("Recognized Text:", st.session_state.recognized_text_1, key="recognized_text_area_1")
-            query1 = st.session_state.recognized_text_1  # Set recognized text as query
-
-            if query1:
-                response = get_gemini_response1(query1)
-                st.subheader("Response:")
-                st.write(response)
-
-    except sr.UnknownValueError as e:
-        st.warning(f"Could not understand the audio. Please try again in a quiet environment and speak clearly.{e}")
-    except sr.RequestError:
-        st.warning("Error connecting to the speech recognition service. Please check your internet connection.")
-    except Exception as e:
-        st.warning(f"An error occurred: {e}")
-
-    except sr.UnknownValueError as e:
-        st.warning(f"Could not understand the audio. Please try again in a quiet environment and speak clearly.{e}")
-    except sr.RequestError:
-        st.warning("Error connecting to the speech recognition service. Please check your internet connection.")
-    except Exception as e:
-        st.warning(f"An error occurred: {e}")
-    # Text input for query
-    query= st.text_input("HelpDesk", key="text_query")
-
-    # Button to submit the query
-    if st.button("Ask") or query:
-        if query:
-            response = get_gemini_response(query)
-            st.subheader("Response:")
-            st.write(response)
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        response = model.generate_content([prompt, f"Ensure uniqueness with random seed: {os.urandom(4).hex()}"])
+        if hasattr(response, 'text') and response.text:
+            return response.text
         else:
-            st.warning("Please enter or speak a query!")
+            return "Error: No valid response received from Gemini API."
+    except Exception as e:
+        st.error(f"API call failed: {str(e)}")
+        return f"Error: {str(e)}"
 
-    st.markdown('</div>', unsafe_allow_html=True)
-'''
-def generate_question(level, topic):
-    """Generate a structured interview question."""
-    query = f"Ask a concise, one-line {level} level theoretical {topic} interview question that assesses the candidate’s conceptual understanding."
-    return get_gemini_response(query)
+# Audio processing function
+def process_audio(audio_dict, text_key, question_index):
+    """Process audio input and return recognized text."""
+    if audio_dict and "bytes" in audio_dict:
+        st.success("Audio Recorded Successfully!")
+        try:
+            audio_bytes = audio_dict["bytes"]
+            audio_segment = AudioSegment.from_file(io.BytesIO(audio_bytes), format="webm")
+            wav_buffer = io.BytesIO()
+            audio_segment.export(wav_buffer, format="wav")
+            wav_buffer.seek(0)
 
-# Streamlit UI
+            recognizer = sr.Recognizer()
+            with sr.AudioFile(wav_buffer) as source:
+                recognizer.adjust_for_ambient_noise(source, duration=1)
+                audio = recognizer.record(source)
+                recognized_text = recognizer.recognize_google(audio)
+                st.session_state[text_key] = recognized_text
+                st.text_area(f"Recognized Answer for Question {question_index + 1}:", recognized_text, key=f"{text_key}_area_{question_index}")
+                return recognized_text
+        except sr.UnknownValueError:
+            st.warning("Could not understand the audio. Please try again in a quiet environment.")
+        except sr.RequestError:
+            st.warning("Error connecting to the speech recognition service.")
+        except Exception as e:
+            st.warning(f"An error occurred: {e}")
+    return None
+
+# Function to generate a unique interview question
+def generate_question(level, topic, question_num):
+    """Generate a unique theoretical interview question."""
+    query = f"Generate a concise, one-line {level} level theoretical interview question (Question {question_num}/3) for a distinct subtopic of {topic} that assesses the candidate’s conceptual understanding. Ensure the question is unique, focuses on a different aspect or subtopic than any previous questions in this set, and has not been asked before in this session. Previously asked questions: {', '.join(st.session_state.used_questions) if st.session_state.used_questions else 'None'}."
+    question = get_gemini_response(query)
+    st.session_state.used_questions.append(question)  # Track the question
+    return question
+
+# General Voice Query Section
+st.subheader("Voice Query")
+audio_dict = mic_recorder(start_prompt="Click to Speak", stop_prompt="Stop Recording", key="mic_general")
+recognized_text = process_audio(audio_dict, "recognized_text_1", 0)
+if recognized_text:
+    response = get_gemini_response(recognized_text)
+    st.subheader("Response:")
+    st.write(response)
+
+# Text input fallback
+query = st.text_input("HelpDesk", key="text_query")
+if st.button("Ask", key="ask_query"):
+    if query:
+        response = get_gemini_response(query)
+        st.subheader("Response:")
+        st.write(response)
+    else:
+        st.warning("Please enter or speak a query!")
+
+# Mock Interview System
 st.title("AI-Powered Mock Interview System")
 
-# User selects topic & difficulty level
-topic = st.radio("Select Topic:", ("Python", "SQL"))
-level = st.radio("Select Difficulty:", ("Easy", "Intermediate", "Hard"))
+# User selects topic & difficulty level with unique keys
+topic = st.radio("Select Topic:", ("Python", "SQL"), key="mock_topic")
+level = st.radio("Select Difficulty:", ("Easy", "Intermediate", "Hard"), key="mock_level", index=["Easy", "Intermediate", "Hard"].index(st.session_state.difficulty))
 
-if 'answers' not in st.session_state:
-    st.session_state.answers = []
-
-if 'question' not in st.session_state:
-    st.session_state.question = None  # No question until interview starts
-
-# Button to start the interview session
-if st.button("Start Interview"):
-    st.session_state.question = generate_question(level, topic)
-    st.session_state.started = True  # Mark interview as started
+# Start the interview and generate 3 unique questions
+if st.button("Start Interview", key="start_interview"):
+    st.session_state.questions = [
+        generate_question(st.session_state.difficulty, topic, 1),
+        generate_question(st.session_state.difficulty, topic, 2),
+        generate_question(st.session_state.difficulty, topic, 3)
+    ]
+    st.session_state.answers = []  # Reset answers
+    st.session_state.current_question_index = 0
+    st.session_state.started = True
+    st.session_state.interview_complete = False
+    st.session_state.audio_dict_mock = None  # Reset audio dict
     st.rerun()
 
-# Display the first question only after clicking "Start Interview"
-# Imports and setup
-
-import io
-
-# Session state variables
-if 'recognized_text_1' not in st.session_state:
-    st.session_state.recognized_text_1 = ""  # For the first "Click to Speak"
-
-if 'recognized_text_2' not in st.session_state:
-    st.session_state.recognized_text_2 = ""  # For the mock interview
-
-
-
-# First "Click to Speak" Section
-audio_dict = mic_recorder(start_prompt="Click to Speak", stop_prompt="Stop Recording", key="mic_2")
-
-if audio_dict and "bytes" in audio_dict:
-    st.success("Audio Recorded Successfully!")
-    try:
-        # Convert recorded audio to WAV format using pydub
-        audio_bytes = audio_dict["bytes"]
-        audio_segment = AudioSegment.from_file(io.BytesIO(audio_bytes), format="webm")  # Assuming webm format
-        wav_buffer = io.BytesIO()
-        audio_segment.export(wav_buffer, format="wav")  # Export to WAV format
-        wav_buffer.seek(0)
-
-        # Use speech_recognition to process the WAV file
-        recognizer = sr.Recognizer()
-        with sr.AudioFile(wav_buffer) as source:
-            recognizer.adjust_for_ambient_noise(source, duration=1)  # Reduce background noise
-            audio = recognizer.record(source)  # Record the entire audio file
-            recognized_text = recognizer.recognize_google(audio)  # Perform speech recognition
-
-            # Store the recognized text in session state
-            st.session_state.recognized_text_1 = recognized_text
-
-            # Display the recognized text with a unique key
-            st.text_area("Recognized Text:", st.session_state.recognized_text_1, key="recognized_text_area_1")
-            query1 = st.session_state.recognized_text_1  # Set recognized text as query
-
-            if query1:
-                response = get_gemini_response1(query1)
-                st.subheader("Response:")
-                st.write(response)
-
-    except sr.UnknownValueError as e:
-        st.warning(f"Could not understand the audio. Please try again in a quiet environment and speak clearly.{e}")
-    except sr.RequestError:
-        st.warning("Error connecting to the speech recognition service. Please check your internet connection.")
-    except Exception as e:
-        st.warning(f"An error occurred: {e}")
-'''
-'''
 # Mock Interview Section
-# Mock Interview Section
-if 'started' in st.session_state and st.session_state.started:
-    st.write(f"**Question:** {st.session_state.question}")
+if st.session_state.started and not st.session_state.interview_complete:
+    if st.session_state.current_question_index < 3:
+        current_question = st.session_state.questions[st.session_state.current_question_index]
+        st.write(f"**Question {st.session_state.current_question_index + 1}/3:** {current_question}")
 
-    # Button to start speaking for the mock interview
-    if st.button("Click to Speak Your Answer", key="mock_interview_speak_button"):
-        st.session_state.audio_dict_mock = mic_recorder(start_prompt="Click to Speak", stop_prompt="Stop Recording", key="mic_mock_interview")
+        # Single button to trigger recording directly
+        st.session_state.audio_dict_mock = mic_recorder(
+            start_prompt=f"Click to Speak Your Answer for Question {st.session_state.current_question_index + 1}",
+            stop_prompt="Stop Recording",
+            key=f"mic_mock_interview_{st.session_state.current_question_index}"
+        )
 
-        if st.session_state.audio_dict_mock and "bytes" in st.session_state.audio_dict_mock:
-            st.success("Audio Recorded Successfully!")
-            try:
-                # Convert recorded audio to WAV format using pydub
-                audio_bytes = st.session_state.audio_dict_mock["bytes"]
-                audio_segment = AudioSegment.from_file(io.BytesIO(audio_bytes), format="webm")  # Assuming webm format
-                wav_buffer = io.BytesIO()
-                audio_segment.export(wav_buffer, format="wav")  # Export to WAV format
-                wav_buffer.seek(0)
+        # Process the recorded audio if available
+        if st.session_state.audio_dict_mock:
+            recognized_text_mock = process_audio(st.session_state.audio_dict_mock, "recognized_text_2", st.session_state.current_question_index)
+            if recognized_text_mock:
+                st.session_state.answers.append(recognized_text_mock)  # Store answer
+                evaluation = get_gemini_response(f"Evaluate this answer in terms of correctness, clarity, and depth for the question '{current_question}': {recognized_text_mock}")
+                st.subheader(f"Evaluation for Question {st.session_state.current_question_index + 1}:")
+                st.write(evaluation)
 
-                # Use speech_recognition to process the WAV file
-                recognizer = sr.Recognizer()
-                with sr.AudioFile(wav_buffer) as source:
-                    recognizer.adjust_for_ambient_noise(source, duration=1)  # Reduce background noise
-                    audio = recognizer.record(source)  # Record the entire audio file
-                    recognized_text_mock = recognizer.recognize_google(audio)  # Perform speech recognition
+                # Adjust difficulty for next question
+                if "good" in evaluation.lower() and st.session_state.difficulty != "Hard":
+                    st.session_state.difficulty = "Intermediate" if st.session_state.difficulty == "Easy" else "Hard"
+                elif "poor" in evaluation.lower() and st.session_state.difficulty != "Easy":
+                    st.session_state.difficulty = "Easy" if st.session_state.difficulty == "Hard" else "Intermediate"
 
-                    # Store the recognized text in session state
-                    st.session_state.recognized_text_2 = recognized_text_mock
-
-                    # Display the recognized text with a unique key
-                    st.text_area("Recognized Answer:", st.session_state.recognized_text_2, key="recognized_answer_area_mock")
-
-                    # Evaluate the answer
-                    def evaluate_answer(answer):
-                        """Evaluate the answer and return feedback."""
-                        return get_gemini_response(f"Evaluate this answer in terms of correctness, clarity, and depth: {answer}")
-
-                    evaluation = evaluate_answer(st.session_state.recognized_text_2)
-                    st.subheader("Evaluation:")
-                    st.write(evaluation)
-
-                    # Adjust difficulty based on evaluation
-                    if "good" in evaluation.lower():
-                        level = "Intermediate" if level == "Easy" else "Hard"
-                    elif "poor" in evaluation.lower():
-                        level = "Easy"
-
-                    # Generate the next question
-                    st.session_state.question = generate_question(level, topic)
+                # Move to next question and reset audio dict
+                st.session_state.current_question_index += 1
+                st.session_state.audio_dict_mock = None  # Clear audio dict to allow new recording
+                if st.session_state.current_question_index < 3:
+                    st.rerun()
+                else:
+                    st.session_state.interview_complete = True
                     st.rerun()
 
-            except sr.UnknownValueError:
-                st.warning("Could not understand the audio. Please try again in a quiet environment.")
-            except sr.RequestError:
-                st.warning("Error connecting to the speech recognition service.")
-            except Exception as e:
-                st.warning(f"An error occurred: {e}")
+# Provide overall feedback after all 3 questions are answered
+if st.session_state.interview_complete and len(st.session_state.answers) == 3:
+    st.subheader("Interview Completed!")
+    combined_answers = "\n".join([f"Q{i+1}: {q}\nA{i+1}: {a}" for i, (q, a) in enumerate(zip(st.session_state.questions, st.session_state.answers))])
+    feedback = get_gemini_response(f"Provide overall feedback for these 3 question-answer pairs and suggest improvements:\n{combined_answers}")
+    st.subheader("Overall Feedback:")
+    st.write(feedback)
 
-    # Provide overall feedback after 3-4 answers
-    if len(st.session_state.answers) >= 3:
-        combined_answers = "\n".join(st.session_state.answers)
-        feedback = get_gemini_response(f"Provide an overall feedback for these answers and suggest improvements: {combined_answers}")
-        st.subheader("Overall Feedback:")
-        st.write(feedback)
-'''
-def get_youtube_transcript(video_id):
-    try:
-        transcript = YouTubeTranscriptApi.get_transcript(video_id,languages=['en'])
-        full_transcript = " ".join([entry['text'] for entry in transcript])
-        return full_transcript
-    except Exception as e:
-        st.error(f"Failed to fetch transcript: {str(e)}")
-        return None
-
-# Function to generate summary and insights using Gemini API
+    # Option to restart
+    if st.button("Restart Interview", key="restart_interview"):
+        st.session_state.started = False
+        st.session_state.interview_complete = False
+        st.session_state.current_question_index = 0
+        st.session_state.questions = []
+        st.session_state.answers = []
+        st.session_state.audio_dict_mock = None
+        st.rerun()
 def generate_summary_and_insights(transcript):
     if not transcript:
         return "Error: No transcript available."
@@ -920,65 +880,3 @@ def transcribe_audio(audio_file):
         return "Error: Could not request results from the speech recognition service."
     except Exception as e:
         return f"Error: {e}"
-
-# Sidebar for settings
-st.sidebar.write("### Mock Interview Settings")
-st.session_state.topic = st.sidebar.selectbox("Select Topic", ["Python", "SQL"])
-st.session_state.difficulty = st.sidebar.selectbox("Select Difficulty", ["Easy", "Medium", "Hard"])
-st.session_state.num_questions = st.sidebar.number_input(
-    "How many questions do you want to answer?", 
-    min_value=1, 
-    max_value=10, 
-    value=3
-)
-
-# Start the mock interview
-if st.sidebar.button("Start Mock Interview"):
-    st.session_state.questions = [
-        generate_question(st.session_state.topic, st.session_state.difficulty, i + 1)
-        for i in range(st.session_state.num_questions)
-    ]
-    st.session_state.submitted = False  # Reset submission status
-
-# Display all questions and allow the user to answer them
-if st.session_state.questions and not st.session_state.submitted:
-    st.write("### Mock Interview Questions")
-    for i, question in enumerate(st.session_state.questions):
-        st.write(f"**Question {i + 1}:** {question}")
-
-        # File upload for audio response
-        audio_file = st.file_uploader(
-            f"Upload your audio response for Question {i + 1} (WAV or MP3)", 
-            type=["wav", "mp3"], 
-            key=f"audio_uploader_{i}"
-        )
-
-        if audio_file:
-            recognized_text = transcribe_audio(audio_file)
-            st.session_state.recognized_texts[i] = recognized_text
-
-        # Display the recognized text
-        if i in st.session_state.recognized_texts:
-            st.text_area(
-                f"Recognized Answer for Question {i + 1}:",
-                st.session_state.recognized_texts[i],
-                key=f"recognized_text_area_{i}"
-            )
-
-    # Submit button to evaluate all answers
-    if st.button("Submit All Answers"):
-        st.session_state.submitted = True
-
-# Evaluate all answers after submission
-if st.session_state.submitted:
-    st.write("### Evaluation Results")
-    for i, question in enumerate(st.session_state.questions):
-        recognized_text = st.session_state.recognized_texts.get(i, "")
-        if recognized_text:
-            evaluation = evaluate_answer(question, recognized_text)
-            st.write(f"**Question {i + 1}:** {question}")
-            st.write(f"**Your Answer:** {recognized_text}")
-            st.write(f"**Evaluation:** {evaluation}")
-            st.write("---")
-        else:
-            st.warning(f"No answer recorded for Question {i + 1}.")
