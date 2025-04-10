@@ -745,14 +745,3 @@ if youtube_link:
     except Exception as e:
         st.error(f"❌ Error processing video: {str(e)}")
 
-# Log Viewer
-st.markdown("---")
-st.subheader("API Usage Logs")
-if st.button("View Logs"):
-    try:
-        with open(LOG_FILE, 'r') as f:
-            logs = f.read()
-        st.text_area("Logs", logs, height=200)
-        st.download_button("Download Logs", logs, "api_usage_logs.csv", "text/csv")
-    except FileNotFoundError:
-        st.warning("No logs available yet.")
