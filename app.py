@@ -39,6 +39,10 @@ def log_api_usage(action, api_hits, tokens_generated, time_taken):
         with open(LOG_FILE, 'a', newline='') as f:
             writer = csv.writer(f)
             writer.writerow([datetime.now().isoformat(), action, api_hits, tokens_generated, f"{time_taken:.2f}"])
+def get_all_query1(query):
+    model = genai.GenerativeModel('gemini-1.5-flash')
+    response = model.generate_content([query])
+    return response.text
 
 # Initialize session states
 if 'recognized_text_1' not in st.session_state:
@@ -621,7 +625,7 @@ audio_dict = mic_recorder(start_prompt="Click to Speak", stop_prompt="Stop Recor
 recognized_text = process_audio(audio_dict, "recognized_text_1", 0)
 if recognized_text:
     start_time = time.time()
-    response = get_gemini_response(recognized_text)
+    response = get_all_query1(recognized_text)
     tokens = len(response) // 4
     log_api_usage("Voice_Input_Response", 1, tokens, time.time() - start_time)
     st.subheader("Response:")

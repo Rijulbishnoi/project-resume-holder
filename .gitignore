@@ -1,2 +1,3 @@
 menv/
-.env
+.env/
+api_usage_logs.csv
