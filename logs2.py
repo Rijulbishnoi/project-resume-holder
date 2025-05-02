@@ -27,7 +27,7 @@ import threading
 csv_lock = threading.Lock()
 
 # Initialize logging file
-LOG_FILE = "api_usage_logs.csv"
+LOG_FILE = "api_usage_logs2.csv"
 if not os.path.exists(LOG_FILE):
     with open(LOG_FILE, 'w', newline='') as f:
         writer = csv.writer(f)
@@ -40,7 +40,7 @@ def log_api_usage(action, api_hits, tokens_generated, time_taken):
             writer = csv.writer(f)
             writer.writerow([datetime.now().isoformat(), action, api_hits, tokens_generated, f"{time_taken:.2f}"])
 def get_all_query1(query):
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    model = genai.GenerativeModel('gemini-2.5-pro-exp-03-25')
     response = model.generate_content([query])
     return response.text
 
@@ -101,7 +101,7 @@ def get_gemini_response(prompt):
         return "Error: Prompt is empty. Please provide a valid prompt."
     start_time = time.time()
     try:
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-2.0-flash')
         response = model.generate_content([prompt, f"Add unique variations each time this prompt is called: {os.urandom(8).hex()}"])
         end_time = time.time()
         
@@ -150,7 +150,7 @@ Transcript:
     """
     
     try:
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-2.0-flash')
         response = model.generate_content(prompt)
         tokens = len(response.text) // 4 if hasattr(response, 'text') and response.text else 0
         log_api_usage("Generate_Summary", 1, tokens, time.time() - start_time)
@@ -643,78 +643,78 @@ if wrap_button_with_logging("Ask", "ask_query", lambda: (
     else:
         st.warning(response)
 
-# # Mock Interview System
-# st.title("AI-Powered Mock Interview System")
+# Mock Interview System
+st.title("AI-Powered Mock Interview System")
 
-# topic = st.radio("Select Topic:", ("Python", "SQL"), key="mock_topic")
-# level = st.radio("Select Difficulty:", ("Easy", "Intermediate", "Hard"), key="mock_level", index=["Easy", "Intermediate", "Hard"].index(st.session_state.difficulty))
+topic = st.radio("Select Topic:", ("Python", "SQL"), key="mock_topic")
+level = st.radio("Select Difficulty:", ("Easy", "Intermediate", "Hard"), key="mock_level", index=["Easy", "Intermediate", "Hard"].index(st.session_state.difficulty))
 
-# if wrap_button_with_logging("Start Interview", "start_interview", lambda: "Start"):
-#     st.session_state.questions = [
-#         generate_question(st.session_state.difficulty, topic, 1),
-#         generate_question(st.session_state.difficulty, topic, 2),
-#         generate_question(st.session_state.difficulty, topic, 3)
-#     ]
-#     st.session_state.answers = []
-#     st.session_state.current_question_index = 0
-#     st.session_state.started = True
-#     st.session_state.interview_complete = False
-#     st.session_state.audio_dict_mock = None
-#     st.rerun()
+if wrap_button_with_logging("Start Interview", "start_interview", lambda: "Start"):
+    st.session_state.questions = [
+        generate_question(st.session_state.difficulty, topic, 1),
+        generate_question(st.session_state.difficulty, topic, 2),
+        generate_question(st.session_state.difficulty, topic, 3)
+    ]
+    st.session_state.answers = []
+    st.session_state.current_question_index = 0
+    st.session_state.started = True
+    st.session_state.interview_complete = False
+    st.session_state.audio_dict_mock = None
+    st.rerun()
 
-# if st.session_state.started and not st.session_state.interview_complete:
-#     if st.session_state.current_question_index < 3:
-#         current_question = st.session_state.questions[st.session_state.current_question_index]
-#         st.write(f"**Question {st.session_state.current_question_index + 1}/3:** {current_question}")
+if st.session_state.started and not st.session_state.interview_complete:
+    if st.session_state.current_question_index < 3:
+        current_question = st.session_state.questions[st.session_state.current_question_index]
+        st.write(f"**Question {st.session_state.current_question_index + 1}/3:** {current_question}")
 
-#         st.session_state.audio_dict_mock = mic_recorder(
-#             start_prompt=f"Click to Speak Your Answer for Question {st.session_state.current_question_index + 1}",
-#             stop_prompt="Stop Recording",
-#             key=f"mic_mock_interview_{st.session_state.current_question_index}"
-#         )
+        st.session_state.audio_dict_mock = mic_recorder(
+            start_prompt=f"Click to Speak Your Answer for Question {st.session_state.current_question_index + 1}",
+            stop_prompt="Stop Recording",
+            key=f"mic_mock_interview_{st.session_state.current_question_index}"
+        )
 
-#         if st.session_state.audio_dict_mock:
-#             recognized_text_mock = process_audio(st.session_state.audio_dict_mock, "recognized_text_2", st.session_state.current_question_index)
-#             if recognized_text_mock:
-#                 st.session_state.answers.append(recognized_text_mock)
-#                 start_time = time.time()
-#                 evaluation = get_gemini_response(f"Evaluate this answer in terms of correctness, clarity, and depth for the question '{current_question}': {recognized_text_mock}")
-#                 tokens = len(evaluation) // 4
-#                 log_api_usage(f"Evaluate_Answer_Q{st.session_state.current_question_index + 1}", 1, tokens, time.time() - start_time)
-#                 st.subheader(f"Evaluation for Question {st.session_state.current_question_index + 1}:")
-#                 st.write(evaluation)
+        if st.session_state.audio_dict_mock:
+            recognized_text_mock = process_audio(st.session_state.audio_dict_mock, "recognized_text_2", st.session_state.current_question_index)
+            if recognized_text_mock:
+                st.session_state.answers.append(recognized_text_mock)
+                start_time = time.time()
+                evaluation = get_gemini_response(f"Evaluate this answer in terms of correctness, clarity, and depth for the question '{current_question}': {recognized_text_mock}")
+                tokens = len(evaluation) // 4
+                log_api_usage(f"Evaluate_Answer_Q{st.session_state.current_question_index + 1}", 1, tokens, time.time() - start_time)
+                st.subheader(f"Evaluation for Question {st.session_state.current_question_index + 1}:")
+                st.write(evaluation)
 
-#                 if "good" in evaluation.lower() and st.session_state.difficulty != "Hard":
-#                     st.session_state.difficulty = "Intermediate" if st.session_state.difficulty == "Easy" else "Hard"
-#                 elif "poor" in evaluation.lower() and st.session_state.difficulty != "Easy":
-#                     st.session_state.difficulty = "Easy" if st.session_state.difficulty == "Hard" else "Intermediate"
+                if "good" in evaluation.lower() and st.session_state.difficulty != "Hard":
+                    st.session_state.difficulty = "Intermediate" if st.session_state.difficulty == "Easy" else "Hard"
+                elif "poor" in evaluation.lower() and st.session_state.difficulty != "Easy":
+                    st.session_state.difficulty = "Easy" if st.session_state.difficulty == "Hard" else "Intermediate"
 
-#                 st.session_state.current_question_index += 1
-#                 st.session_state.audio_dict_mock = None
-#                 if st.session_state.current_question_index < 3:
-#                     st.rerun()
-#                 else:
-#                     st.session_state.interview_complete = True
-#                     st.rerun()
+                st.session_state.current_question_index += 1
+                st.session_state.audio_dict_mock = None
+                if st.session_state.current_question_index < 3:
+                    st.rerun()
+                else:
+                    st.session_state.interview_complete = True
+                    st.rerun()
 
-# if st.session_state.interview_complete and len(st.session_state.answers) == 3:
-#     st.subheader("Interview Completed!")
-#     combined_answers = "\n".join([f"Q{i+1}: {q}\nA{i+1}: {a}" for i, (q, a) in enumerate(zip(st.session_state.questions, st.session_state.answers))])
-#     start_time = time.time()
-#     feedback = get_gemini_response(f"Provide overall feedback for these 3 question-answer pairs and suggest improvements:\n{combined_answers}")
-#     tokens = len(feedback) // 4
-#     log_api_usage("Overall_Feedback", 1, tokens, time.time() - start_time)
-#     st.subheader("Overall Feedback:")
-#     st.write(feedback)
+if st.session_state.interview_complete and len(st.session_state.answers) == 3:
+    st.subheader("Interview Completed!")
+    combined_answers = "\n".join([f"Q{i+1}: {q}\nA{i+1}: {a}" for i, (q, a) in enumerate(zip(st.session_state.questions, st.session_state.answers))])
+    start_time = time.time()
+    feedback = get_gemini_response(f"Provide overall feedback for these 3 question-answer pairs and suggest improvements:\n{combined_answers}")
+    tokens = len(feedback) // 4
+    log_api_usage("Overall_Feedback", 1, tokens, time.time() - start_time)
+    st.subheader("Overall Feedback:")
+    st.write(feedback)
 
-#     if wrap_button_with_logging("Restart Interview", "restart_interview", lambda: "Restart"):
-#         st.session_state.started = False
-#         st.session_state.interview_complete = False
-#         st.session_state.current_question_index = 0
-#         st.session_state.questions = []
-#         st.session_state.answers = []
-#         st.session_state.audio_dict_mock = None
-#         st.rerun()
+    if wrap_button_with_logging("Restart Interview", "restart_interview", lambda: "Restart"):
+        st.session_state.started = False
+        st.session_state.interview_complete = False
+        st.session_state.current_question_index = 0
+        st.session_state.questions = []
+        st.session_state.answers = []
+        st.session_state.audio_dict_mock = None
+        st.rerun()
 
 # YouTube Video Analysis Section
 st.markdown("---")
@@ -749,135 +749,3 @@ if youtube_link:
     except Exception as e:
         st.error(f"❌ Error processing video: {str(e)}")
 
-# Add these imports at the top of your file
-from elevenlabs.client import ElevenLabs
-import io
-import time
-import os
-import streamlit as st
-
-def text_to_speech(text, voice_id="Rachel"):
-    """Convert text to speech using ElevenLabs API with logging."""
-    ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
-    if not ELEVENLABS_API_KEY:
-        return None, "⚠ ElevenLabs API key not configured."
-
-    start_time = time.time()
-    try:
-        # Initialize ElevenLabs client
-        client = ElevenLabs(api_key=ELEVENLABS_API_KEY)
-        
-        # Generate audio
-        audio = client.generate(
-            text=text,
-            voice=voice_id,
-            model="eleven_monolingual_v1",
-            voice_settings={"stability": 0.7, "similarity_boost": 0.5}
-        )
-        
-        # Convert audio stream to bytes
-        audio_bytes = io.BytesIO(b''.join(audio))  # Audio is a generator, join chunks
-        audio_bytes.seek(0)
-        
-        tokens = len(text) // 4  # Approximate tokens based on input text
-        log_api_usage("ElevenLabs_TTS", 1, tokens, time.time() - start_time)
-        return audio_bytes, None
-    except Exception as e:
-        log_api_usage("ElevenLabs_TTS_Error", 1, 0, time.time() - start_time)
-        return None, f"Error generating audio: {str(e)}"
-
-# Replace the Mock Interview System section in your code with this updated version
-st.title("AI-Powered Mock Interview System")
-
-# Allow user to select topic and difficulty
-topic = st.radio("Select Topic:", ("Python", "SQL", "Digital Marketing"), key="mock_topic")  # Added Digital Marketing
-level = st.radio("Select Difficulty:", ("Easy", "Intermediate", "Hard"), key="mock_level", index=["Easy", "Intermediate", "Hard"].index(st.session_state.difficulty))
-
-# Voice selection for ElevenLabs (optional customization)
-voice_options = ["Rachel", "Clyde", "Domi", "Dave"]  # Example ElevenLabs voice IDs
-selected_voice = st.selectbox("Select Interviewer Voice:", voice_options, key="voice_selection")
-
-if wrap_button_with_logging("Start Interview", "start_interview", lambda: "Start"):
-    # Generate 3 unique questions for the selected topic
-    st.session_state.questions = [
-        generate_question(st.session_state.difficulty, topic, 1),
-        generate_question(st.session_state.difficulty, topic, 2),
-        generate_question(st.session_state.difficulty, topic, 3)
-    ]
-    st.session_state.answers = []
-    st.session_state.current_question_index = 0
-    st.session_state.started = True
-    st.session_state.interview_complete = False
-    st.session_state.audio_dict_mock = None
-    st.rerun()
-
-if st.session_state.started and not st.session_state.interview_complete:
-    if st.session_state.current_question_index < 3:
-        current_question = st.session_state.questions[st.session_state.current_question_index]
-        st.write(f"**Question {st.session_state.current_question_index + 1}/3:** {current_question}")
-
-        # Convert the question to speech using ElevenLabs
-        audio_bytes, error = text_to_speech(current_question, voice_id=selected_voice)
-        if audio_bytes:
-            st.audio(audio_bytes, format="audio/mp3")
-        elif error:
-            st.warning(error)  # Display error but continue with text-based question
-
-        # Record user's answer via microphone
-        st.session_state.audio_dict_mock = mic_recorder(
-            start_prompt=f"Click to Speak Your Answer for Question {st.session_state.current_question_index + 1}",
-            stop_prompt="Stop Recording",
-            key=f"mic_mock_interview_{st.session_state.current_question_index}"
-        )
-
-        if st.session_state.audio_dict_mock:
-            recognized_text_mock = process_audio(st.session_state.audio_dict_mock, "recognized_text_2", st.session_state.current_question_index)
-            if recognized_text_mock:
-                st.session_state.answers.append(recognized_text_mock)
-                start_time = time.time()
-                evaluation = get_gemini_response(f"Evaluate this answer in terms of correctness, clarity, and depth for the question '{current_question}': {recognized_text_mock}")
-                tokens = len(evaluation) // 4
-                log_api_usage(f"Evaluate_Answer_Q{st.session_state.current_question_index + 1}", 1, tokens, time.time() - start_time)
-                st.subheader(f"Evaluation for Question {st.session_state.current_question_index + 1}:")
-                st.write(evaluation)
-
-                # Adjust difficulty based on evaluation
-                if "good" in evaluation.lower() and st.session_state.difficulty != "Hard":
-                    st.session_state.difficulty = "Intermediate" if st.session_state.difficulty == "Easy" else "Hard"
-                elif "poor" in evaluation.lower() and st.session_state.difficulty != "Easy":
-                    st.session_state.difficulty = "Easy" if st.session_state.difficulty == "Hard" else "Intermediate"
-
-                st.session_state.current_question_index += 1
-                st.session_state.audio_dict_mock = None
-                if st.session_state.current_question_index < 3:
-                    st.rerun()
-                else:
-                    st.session_state.interview_complete = True
-                    st.rerun()
-
-if st.session_state.interview_complete and len(st.session_state.answers) == 3:
-    st.subheader("Interview Completed!")
-    combined_answers = "\n".join([f"Q{i+1}: {q}\nA{i+1}: {a}" for i, (q, a) in enumerate(zip(st.session_state.questions, st.session_state.answers))])
-    start_time = time.time()
-    feedback = get_gemini_response(f"Provide overall feedback for these 3 question-answer pairs and suggest improvements:\n{combined_answers}")
-    tokens = len(feedback) // 4
-    log_api_usage("Overall_Feedback", 1, tokens, time.time() - start_time)
-    st.subheader("Overall Feedback:")
-    st.write(feedback)
-
-    # Convert feedback to speech for a concluding message
-    concluding_message = "Thank you for completing the mock interview. Below is your overall feedback."
-    audio_bytes, error = text_to_speech(concluding_message, voice_id=selected_voice)
-    if audio_bytes:
-        st.audio(audio_bytes, format="audio/mp3")
-    elif error:
-        st.warning(error)
-
-    if wrap_button_with_logging("Restart Interview", "restart_interview", lambda: "Restart"):
-        st.session_state.started = False
-        st.session_state.interview_complete = False
-        st.session_state.current_question_index = 0
-        st.session_state.questions = []
-        st.session_state.answers = []
-        st.session_state.audio_dict_mock = None
-        st.rerun()

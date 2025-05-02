@@ -326,5 +326,6 @@ if selected_company:
         st.write(f"✅ {requirement}")
 
 
+
 st.success("Stay ahead by mastering these skills!")
 
